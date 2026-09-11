@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Avatar } from "@/components/avatar";
 import { ShareButtons } from "@/components/share-buttons";
+import { SocialLinks } from "@/components/social-links";
 import { StatusMark } from "@/components/status-mark";
 import { Timeline } from "@/components/timeline";
 import { Progress } from "@/components/ui/progress";
@@ -62,6 +63,9 @@ export default function ProfilePage() {
             {user.bio && (
               <p className="mt-1 text-sm text-muted-foreground">{user.bio}</p>
             )}
+            <div className="mt-2">
+              <SocialLinks socials={user.socials} />
+            </div>
           </div>
         </div>
       </header>

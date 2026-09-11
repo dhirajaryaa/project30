@@ -1,0 +1,83 @@
+# Project 30
+
+> 30 minutes. 30 days. One area.
+> Project 30 is a 30-day accountability system: a quiet personal accountability journal and a public build log. You choose one area you want to improve, work on it for 30 minutes every day for 30 days, and record what you did, what you learned, and what you will do next. The whole product loop is: write a markdown file, edit one JSON file, commit, push. Vercel rebuilds, the site updates.
+
+## Important
+
+- Project 30 is deliberately NOT a task manager, social network, habit-gamification app, or AI productivity assistant.
+- There is NO database, NO authentication, NO multi-user anything, NO server API routes, NO middleware. It is a fully static Next.js site (`output: "export"`) deployed to Vercel.
+- All content is plain files committed to the repo — content is the source of truth, never a database.
+- Status vocabulary is fixed: **Completed ✓**, **Partial ◐**, **Missed —**, **Not completed yet ○**. "Missed" is the only accepted word — never "Absent".
+- AI assistance is allowed to help summarize reflections and suggest tomorrow's plan, but must NEVER auto-generate fake progress. The user's real work stays user-controlled.
+- Every public page must render well as a screenshot; OG images are generated at build time into `public/og/` (never committed).
+- Definition of done: landing page, public profile, 30-day timeline, any logged day, sharing a day, OG previews, and a static export that deploys with one push. Stop there — no extra features.
+
+## Details
+
+### The core loop
+
+1. Choose **one area** to improve.
+2. Set a **30-day goal**.
+3. Work **30 minutes every day** — the bar is intentionally low and repeatable.
+4. **Log** what you did, what you learned, and what felt difficult.
+5. **Repeat for 30 days** — plan tomorrow as you finish today.
+
+### How content works
+
+- `config/config.json` — defines the owner (username, display_name, avatar_url, bio, socials) and the active project (area, goal, start_date, status). `start_date` drives the "current day" math in `lib/content.ts`: day = days since start (clamped to 0–30; pre-start shows 0).
+- `daily-log/NN.md` — one markdown file per day (`01.md` … `30.md`). YAML frontmatter:
+
+  ```yaml
+  ---
+  day: 1              # 1-30, must match filename
+  date: 2026-09-11    # YYYY-MM-DD
+  task: "Set up Project 30"
+  status: completed   # completed | partial | missed
+  activity_type: building  # learning | building | bug-fix | feature | ui-design | research | practice | other
+  missed_reason: ""   # only when status = missed
+  evidence_url: ""
+  ---
+  ```
+
+  The body is markdown prose rendered with react-markdown + remark-gfm (headings, lists, code blocks, GFM tables).
+
+### Pages (all static, all public)
+
+- `/` — Landing: hero, 5-step system, live 30-day grid pulled from `daily-log/`.
+- `/journey` — Timeline of all 30 days with the status vocabulary + full entries list.
+- `/day/[day]` — Journal entry page with share buttons (copy link, native share, X/LinkedIn).
+- `/profile` — Single-person profile: avatar, 🚩 goal, area, day X/30, progress bar, completed/partial/missed counts, 30-day timeline, recent entries, social links, share buttons.
+- `/profile/day/[day]` — Public single-day entry, the share URL for a specific day.
+- `/llms.txt` — machine-readable project description (this file).
+
+Social sharing is the public URL + a static OG PNG, shared directly from the day pages. No separate share page, no per-network integrations.
+
+### Tech stack
+
+- Next.js (App Router, `output: "export"`), TypeScript, Tailwind CSS v4, shadcn/ui.
+- Custom theme in `app/globals.css` — warm neutral palette with terracotta accent `#e08a5c`.
+- react-markdown + remark-gfm for journal prose.
+- @tabler/icons-react for icons (social/share/theme), @fontsource/inter.
+- `lib/content.ts` reads config + logs at build time (getUser, getProject, getAllLogs, getCurrentDay); `lib/storage.ts` has pure helpers (sort, count, lookup); `lib/site.ts` holds SITE_PUBLIC_URL for metadataBase and share links.
+- `scripts/generate-og.cjs` renders 1200×630 PNGs at build time with satori + @resvg/resvg-js into `public/og/` (home, journey, profile, day/N, profile/day/N).
+- Package manager: pnpm.
+
+### Design rules
+
+- Calm, focused, minimal. Avoid excessive cards, gaudy decoration, dashboard clutter.
+- Progress must be visible: large day number, clean progress bar.
+- Generous whitespace, strong typographic hierarchy, the terracotta accent is the only loud color.
+- Mobile responsive. No comments in code unless asked.
+
+## Optional
+
+- How to run: `pnpm dev` (dev server), `pnpm build` (static export, runs OG generation first), `pnpm start` (serve `out/`), `pnpm lint`, `pnpm exec tsc --noEmit`.
+- Start your own challenge: clone the repo, edit `config/config.json` + `daily-log/`, push to Vercel.
+- Build log: this project itself is the day-1 artifact of a 30-day full-stack development challenge.
+
+## Links
+
+- Source / repo: https://github.com/dhirajaryaa/project30
+- README: https://raw.githubusercontent.com/dhirajaryaa/project30/main/README.md
+- Spec: AGENTS.md lives in the repo root and defines the full build specification from which this file is derived.

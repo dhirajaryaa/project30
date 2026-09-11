@@ -3,7 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { ArrowUpRight, Check, Copy, Globe, Share2 } from "lucide-react";
+import {
+  IconBrandLinkedin,
+  IconBrandX,
+  IconCheck,
+  IconCopy,
+  IconShare2,
+} from "@tabler/icons-react";
 import { absoluteUrl } from "@/lib/site";
 
 type Props = {
@@ -48,15 +54,15 @@ export function ShareButtons({ url, title, text }: Props) {
     <div className="flex flex-wrap items-center gap-2">
       <Button variant="outline" onClick={copy} data-slot="button">
         {copied ? (
-          <Check className="text-primary" />
+          <IconCheck className="text-primary" />
         ) : (
-          <Copy />
+          <IconCopy />
         )}
         {copied ? "Copied" : "Copy link"}
       </Button>
 {hasShare && (
           <Button variant="secondary" onClick={webShare}>
-            <Share2 />
+            <IconShare2 />
             Share
           </Button>
         )}
@@ -67,7 +73,7 @@ export function ShareButtons({ url, title, text }: Props) {
         rel="noopener noreferrer"
         aria-label="Share on X (Twitter)"
       >
-        <ArrowUpRight />
+        <IconBrandX />
         <span className="hidden sm:inline">X</span>
       </Link>
       <Link
@@ -77,7 +83,7 @@ export function ShareButtons({ url, title, text }: Props) {
         rel="noopener noreferrer"
         aria-label="Share on LinkedIn"
       >
-        <Globe />
+        <IconBrandLinkedin />
         <span className="hidden sm:inline">LinkedIn</span>
       </Link>
     </div>

@@ -150,12 +150,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <footer className="border-t border-border/60 py-10 text-center text-xs text-muted-foreground">
-        <p>
-          Less management. More doing. More reflection. More visible progress.
-        </p>
-      </footer>
     </div>
   );
 }

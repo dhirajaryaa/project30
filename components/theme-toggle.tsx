@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Moon, Sun } from "lucide-react";
+import { IconMoon, IconSun } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 
 const THEME_KEY = "project30:theme";
@@ -46,7 +46,7 @@ export function ThemeToggle() {
         setTheme(next);
       }}
     >
-      {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+      {theme === "dark" ? <IconSun size={16} /> : <IconMoon size={16} />}
     </Button>
   );
 }
