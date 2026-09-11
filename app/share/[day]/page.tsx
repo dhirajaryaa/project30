@@ -12,6 +12,7 @@ import {
   missedReasonLabel,
 } from "@/lib/constants";
 import { formatNice } from "@/lib/dates";
+import { absoluteUrl } from "@/lib/site";
 import { cn } from "cn";
 
 export default function SharePage({
@@ -32,9 +33,8 @@ export default function SharePage({
   if (status !== "ready" || !project || !user) return null;
 
   const log = getLog(day);
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const shareUrl = `${baseUrl}/u/${user.username}/day/${day}`;
-  const profileUrl = `${baseUrl}/u/${user.username}`;
+  const shareUrl = absoluteUrl(`/u/${user.username}/day/${day}`);
+  const profileUrl = absoluteUrl(`/u/${user.username}`);
 
   if (!log) {
     return (

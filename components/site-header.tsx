@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useApp } from "@/components/app-provider";
+import { avatarUrl } from "@/lib/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 import { cn } from "cn";
@@ -51,9 +52,22 @@ export function SiteHeader() {
           {signedIn && user && project && (
             <Link
               href={`/u/${user.username}`}
-              className="ml-1 hidden rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+              className="ml-1 hidden items-center gap-2 rounded-md p-1 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex"
+              aria-label="View public profile"
+              title={user.display_name || user.username}
             >
-              @{user.username}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={user.avatar_url || avatarUrl(user.username)}
+                alt=""
+                width={24}
+                height={24}
+                loading="lazy"
+                className="h-6 w-6 rounded-md border border-border bg-primary/10 object-cover"
+              />
+              <span className="hidden max-w-[120px] truncate lg:inline">
+                {user.display_name || user.username}
+              </span>
             </Link>
           )}
           {signedIn && !user && (

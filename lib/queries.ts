@@ -1,8 +1,7 @@
-import { connectDb } from "./db";
+import { connectDb, getAuthDb } from "./db";
 import {
   DailyLog,
   Project,
-  User,
   toLogDto,
   toProjectDto,
   toPublicLogDto,
@@ -11,26 +10,43 @@ import {
 import { countByStatus, getLogByDay } from "./storage";
 import type { AppData } from "./types";
 
-export async function getProfileUserByAuthId(authId: string) {
-  const conn = await connectDb();
-  if (!conn) return null;
-  return User.findOne({ auth_id: authId });
+// better-auth's mongodbAdapter stores _id as a string (24-hex).
+// The native driver's TS types assume ObjectId; these casts are safe.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const authFilter = (id: string): any => ({ _id: id });
+
+async function getAuthUserById(authId: string) {
+  try {
+    const db = await getAuthDb();
+    return await db.collection("user").findOne(authFilter(authId));
+  } catch {
+    return null;
+  }
+}
+
+async function getAuthUserByUsername(username: string) {
+  try {
+    const db = await getAuthDb();
+    return await db.collection("user").findOne({ username: username.toLowerCase() });
+  } catch {
+    return null;
+  }
 }
 
 export async function getProfileData(authId: string): Promise<AppData | null> {
   if (!authId) return null;
   const conn = await connectDb();
   if (!conn) return null;
-  const user = await User.findOne({ auth_id: authId });
+  const user = await getAuthUserById(authId);
   if (!user) return { user: null, project: null, logs: [] };
-  const project = await Project.findOne({ user_id: user._id }).sort({
+  const project = await Project.findOne({ user_id: authId }).sort({
     createdAt: -1,
   });
   const logs = project
     ? await DailyLog.find({ project_id: project._id }).sort({ day_number: 1 })
     : [];
   return {
-    user: toUserDto(user.toObject()),
+    user: toUserDto(user),
     project: project ? toProjectDto(project.toObject()) : null,
     logs: logs.map((l) => toLogDto(l.toObject())),
   };
@@ -39,9 +55,9 @@ export async function getProfileData(authId: string): Promise<AppData | null> {
 export async function getPublicProfile(username: string) {
   const conn = await connectDb();
   if (!conn) return null;
-  const user = await User.findOne({ username: username.toLowerCase() });
-  if (!user) return null;
-  const project = await Project.findOne({ user_id: user._id }).sort({
+  const user = await getAuthUserByUsername(username);
+  if (!user || !user.username) return null;
+  const project = await Project.findOne({ user_id: String(user._id) }).sort({
     createdAt: -1,
   });
   if (!project) return null;
@@ -53,7 +69,7 @@ export async function getPublicProfile(username: string) {
   const counts = countByStatus(dtoLogs);
   const progress = Math.min(Math.round((counts.completed / 30) * 100), 100);
   return {
-    user: toUserDto(user.toObject()),
+    user: toUserDto(user),
     project: toProjectDto(project.toObject()),
     logs: dtoLogs,
     currentDay,
@@ -66,16 +82,16 @@ export async function getPublicProfile(username: string) {
 export async function getPublicDay(username: string, day: number) {
   const conn = await connectDb();
   if (!conn) return null;
-  const user = await User.findOne({ username: username.toLowerCase() });
-  if (!user) return null;
-  const project = await Project.findOne({ user_id: user._id }).sort({
+  const user = await getAuthUserByUsername(username);
+  if (!user || !user.username) return null;
+  const project = await Project.findOne({ user_id: String(user._id) }).sort({
     createdAt: -1,
   });
   if (!project) return null;
   const log = await DailyLog.findOne({ project_id: project._id, day_number: day });
   if (!log) return null;
   return {
-    user: toUserDto(user.toObject()),
+    user: toUserDto(user),
     project: toProjectDto(project.toObject()),
     log: toPublicLogDto(log.toObject()),
   };

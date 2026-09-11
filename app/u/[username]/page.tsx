@@ -89,14 +89,12 @@ export default async function PublicProfilePage({
         </div>
       </header>
 
-      <section className="mb-10 flex flex-col gap-3">
-        <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+      <section className="mb-10 flex flex-col gap-2">
+        <h1 className="flex items-start gap-2 text-2xl leading-snug font-semibold tracking-tight sm:text-3xl">
           <span aria-hidden>🚩</span>
-          {project.area}
-        </span>
-        <p className="max-w-2xl text-2xl leading-snug font-semibold tracking-tight text-foreground sm:text-3xl">
-          {project.goal}
-        </p>
+          <span>{project.goal}</span>
+        </h1>
+        <p className="max-w-2xl text-sm text-muted-foreground">{project.area}</p>
       </section>
 
       <section className="mb-4">

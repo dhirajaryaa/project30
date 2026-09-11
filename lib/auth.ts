@@ -2,11 +2,7 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
 import { getAuthDb } from "@/lib/db";
-
-const baseURL =
-  process.env.AUTH_URL ??
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  "http://localhost:3000";
+import { SITE_URL } from "@/lib/site";
 
 const hasGoogle = Boolean(
   process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -15,11 +11,17 @@ const hasGoogle = Boolean(
 const db = await getAuthDb();
 
 export const auth = betterAuth({
-  baseURL,
+  baseURL: SITE_URL,
   secret: process.env.AUTH_SECRET,
-  trustedOrigins: [baseURL],
+  trustedOrigins: [SITE_URL],
   database: mongodbAdapter(db),
   emailAndPassword: { enabled: false },
+  user: {
+    additionalFields: {
+      username: { type: "string", required: false, input: false },
+      avatar_url: { type: "string", required: false, input: false },
+    },
+  },
   socialProviders: hasGoogle
     ? {
         google: {

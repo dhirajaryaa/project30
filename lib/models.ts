@@ -5,33 +5,10 @@ import type {
   User as UserDTO,
 } from "./types";
 
-const userSchema = new Schema(
-  {
-    auth_id: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-    },
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-    },
-    display_name: { type: String, required: true },
-    avatar_url: String,
-  },
-  { timestamps: true }
-);
-
 const projectSchema = new Schema(
   {
     user_id: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+      type: String,
       required: true,
       index: true,
     },
@@ -75,23 +52,28 @@ const dailyLogSchema = new Schema(
 
 dailyLogSchema.index({ project_id: 1, day_number: 1 }, { unique: true });
 
-export const User = models.User ?? model("User", userSchema);
-export const Project = models.Project ?? model("Project", projectSchema);
-export const DailyLog = models.DailyLog ?? model("DailyLog", dailyLogSchema);
+export const Project =
+  (models.Project as ReturnType<typeof model>) ?? model("Project", projectSchema);
+export const DailyLog =
+  (models.DailyLog as ReturnType<typeof model>) ?? model("DailyLog", dailyLogSchema);
 
 type Doc = Record<string, unknown> & { _id: unknown };
 
-export function toUserDto(doc: Doc): UserDTO {
+// User rows come from the better-auth `user` collection (one table per user).
+// id = the better-auth user id, display name = better-auth `name` (from Google).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function toUserDto(doc: any): UserDTO {
   return {
-    id: String(doc._id),
-    username: String(doc.username),
-    display_name: String(doc.display_name),
+    id: String(doc._id ?? doc.id),
+    username: doc.username ? String(doc.username) : "",
+    display_name: String(doc.name ?? doc.display_name ?? doc.username ?? ""),
     avatar_url: doc.avatar_url ? String(doc.avatar_url) : undefined,
     created_at: String(doc.createdAt ?? doc.created_at ?? new Date().toISOString()),
   };
 }
 
-export function toProjectDto(doc: Doc): ProjectDTO {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function toProjectDto(doc: any): ProjectDTO {
   return {
     id: String(doc._id),
     user_id: String(doc.user_id),
@@ -103,7 +85,8 @@ export function toProjectDto(doc: Doc): ProjectDTO {
   };
 }
 
-export function toLogDto(doc: Doc): DailyLogDTO {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function toLogDto(doc: any): DailyLogDTO {
   return {
     id: String(doc._id),
     project_id: String(doc.project_id),
@@ -125,7 +108,8 @@ export function toLogDto(doc: Doc): DailyLogDTO {
 
 const PRIVATE_FIELDS = ["what_was_difficult", "missed_reason"] as const;
 
-export function toPublicLogDto(doc: Doc): DailyLogDTO {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function toPublicLogDto(doc: any): DailyLogDTO {
   const dto = toLogDto(doc);
   for (const field of PRIVATE_FIELDS) {
     if (dto[field] !== undefined) {

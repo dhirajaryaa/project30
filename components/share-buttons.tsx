@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ArrowUpRight, Check, Copy, Globe, Share2 } from "lucide-react";
+import { SITE_URL } from "@/lib/site";
 
 type Props = {
   url: string;
@@ -14,10 +15,15 @@ type Props = {
 export function ShareButtons({ url, title, text }: Props) {
   const [copied, setCopied] = React.useState(false);
 
+  // The configured site URL wins (matches the OG/cards domain from env);
+  // fall back to the origin the visitor is actually on.
   const absoluteUrl = React.useMemo(() => {
     if (url.startsWith("http")) return url;
     if (typeof window === "undefined") return url;
-    return `${window.location.origin}${url}`;
+    if (SITE_URL.includes("localhost") && typeof process.env.NEXT_PUBLIC_SITE_URL === "undefined") {
+      return `${window.location.origin}${url}`;
+    }
+    return `${SITE_URL}${url}`;
   }, [url]);
 
   const copy = async () => {

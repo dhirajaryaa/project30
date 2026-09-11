@@ -4,9 +4,9 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { avatarUrl } from "@/lib/avatar";
 import { isValidUsername } from "@/lib/dates";
-import { connectDb } from "@/lib/db";
-import { DailyLog, Project, User } from "@/lib/models";
-import { getProfileData, getProfileUserByAuthId } from "@/lib/queries";
+import { connectDb, getAuthDb } from "@/lib/db";
+import { DailyLog, Project } from "@/lib/models";
+import { getProfileData } from "@/lib/queries";
 import type {
   AppData,
   ActivityType,
@@ -42,6 +42,12 @@ const MISSED_REASONS: MissedReason[] = [
 const MAX_FIELD = 5000;
 const MAX_TASK = 300;
 
+// better-auth's mongodbAdapter stores _id as a string; native driver TS types default to ObjectId.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const authFilter = (id: string): any => ({ _id: id });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const projectFilter = (userId: string): any => ({ user_id: userId });
+
 async function requireAuthId(): Promise<string | null> {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -52,9 +58,10 @@ async function requireAuthId(): Promise<string | null> {
 async function requireOwnedProject(authId: string) {
   const conn = await connectDb();
   if (!conn) return { user: null, project: null, error: "Database is unavailable." };
-  const user = await getProfileUserByAuthId(authId);
-  if (!user) return { user: null, project: null, error: "No Project 30 profile yet." };
-  const project = await Project.findOne({ user_id: user._id }).sort({ createdAt: -1 });
+  const db = await getAuthDb();
+  const user = await db.collection("user").findOne(authFilter(authId));
+  if (!user) return { user: null, project: null, error: "No account." };
+  const project = await Project.findOne(projectFilter(authId)).sort({ createdAt: -1 });
   if (!project) return { user, project: null, error: "No active project." };
   return { user, project, error: null };
 }
@@ -102,33 +109,38 @@ export async function onboardProject(input: OnboardInput): Promise<Result> {
 
   const conn = await connectDb();
   if (!conn) return { ok: false, error: "Database is unavailable." };
+  const db = await getAuthDb();
 
-  const existing = await getProfileUserByAuthId(authId);
-  if (existing && (await Project.exists({ user_id: existing._id }))) {
-    return { ok: false, error: "You already have an active Project 30. Finish or reset it first." };
+  const existingUser = await db.collection("user").findOne(authFilter(authId));
+  if (!existingUser) return { ok: false, error: "No account." };
+
+  const activeProject = await Project.findOne(projectFilter(authId)).sort({
+    createdAt: -1,
+  });
+  if (activeProject) {
+    return {
+      ok: false,
+      error: "You already have an active Project 30. Finish or reset it first.",
+    };
   }
-  const usernameTaken = await User.findOne({ username });
+
+  const usernameTaken =
+    existingUser.username !== username &&
+    (await db.collection("user").findOne({ username }));
   if (usernameTaken) {
     return { ok: false, error: "That username is already taken." };
   }
 
-  let user = existing;
-  if (!user) {
-    const created = await User.create({
-      auth_id: authId,
-      username,
-      display_name,
-      avatar_url: avatarUrl(username),
+  await db.collection("user").updateOne(authFilter(authId), {
+      $set: {
+        username,
+        name: display_name,
+        avatar_url: existingUser.avatar_url || avatarUrl(username),
+      },
     });
-    user = created;
-  } else {
-    user.username = username;
-    user.display_name = display_name;
-    if (!user.avatar_url) user.avatar_url = avatarUrl(username);
-    await user.save();
-  }
+
   await Project.create({
-    user_id: user._id,
+    user_id: authId,
     area,
     goal,
     start_date,
@@ -220,10 +232,11 @@ export async function setAvatar(avatar_url: string): Promise<Result> {
 
   const conn = await connectDb();
   if (!conn) return { ok: false, error: "Database is unavailable." };
-  const user = await getProfileUserByAuthId(authId);
-  if (!user) return { ok: false, error: "No Project 30 profile yet." };
-  user.avatar_url = url;
-  await user.save();
+  const db = await getAuthDb();
+  const result = await db
+    .collection("user")
+    .updateOne({ _id: authId }, { $set: { avatar_url: url } });
+  if (!result.matchedCount) return { ok: false, error: "No account." };
 
   const data = await getProfileData(authId);
   return { ok: true, data: data ?? appDataOf(null, null, []) };
@@ -235,14 +248,17 @@ export async function resetAll(): Promise<AppData | null> {
 
   const conn = await connectDb();
   if (!conn) return null;
-  const user = await User.findOne({ auth_id: authId });
-  if (user) {
-    const project = await Project.findOne({ user_id: user._id });
-    if (project) {
-      await DailyLog.deleteMany({ project_id: project._id });
-      await Project.deleteOne({ _id: project._id });
-    }
-    await User.deleteOne({ _id: user._id });
+  const db = await getAuthDb();
+
+  const project = await Project.findOne(projectFilter(authId));
+  if (project) {
+    await DailyLog.deleteMany({ project_id: project._id });
+    await Project.deleteOne({ _id: project._id });
   }
+
+  await db
+    .collection("user")
+    .updateOne(authFilter(authId), { $unset: { username: 1, avatar_url: 1 }, $set: { name: "" } });
+
   return getProfileData(authId);
 }

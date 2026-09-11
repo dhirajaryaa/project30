@@ -12,6 +12,7 @@ import {
   missedReasonLabel,
 } from "@/lib/constants";
 import { formatNice } from "@/lib/dates";
+import { absoluteUrl } from "@/lib/site";
 import { cn } from "cn";
 
 export default function DayPage({
@@ -54,10 +55,7 @@ export default function DayPage({
     );
   }
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/u/${user.username}/day/${log.day_number}`
-      : `/u/${user.username}/day/${log.day_number}`;
+  const shareUrl = absoluteUrl(`/u/${user.username}/day/${log.day_number}`);
 
   return (
     <article className="mx-auto max-w-2xl pt-10 sm:pt-16">
