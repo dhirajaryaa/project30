@@ -1,69 +1,137 @@
-import Image from "next/image";
+import { LandingCta } from "@/components/landing-cta";
+import { buttonVariants } from "@/components/ui/button";
+
+const STEPS = [
+  {
+    n: "01",
+    title: "Choose one area",
+    body: "One area you genuinely want to improve. Not five. Not ten. One.",
+  },
+  {
+    n: "02",
+    title: "Set your 30-day goal",
+    body: "One clear commitment that will keep you coming back for 30 days.",
+  },
+  {
+    n: "03",
+    title: "Work for 30 minutes",
+    body: "Every day. The bar is intentionally low and intentionally repeatable.",
+  },
+  {
+    n: "04",
+    title: "Log what you did",
+    body: "Write down what you did, what you learned, and what felt difficult.",
+  },
+  {
+    n: "05",
+    title: "Repeat for 30 days",
+    body: "Plan tomorrow as you finish today. Watch progress become visible.",
+  },
+];
+
+const MOCK_DAYS: ("done" | "partial" | "missed" | "none")[] = [
+  "done", "done", "done", "done", "done", "missed", "done", "partial",
+  "done", "done", "none", "none", "none", "none", "none", "none",
+  "none", "none", "none", "none", "none", "none", "none", "none",
+  "none", "none", "none", "none", "none", "none",
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex flex-col">
+      <section className="flex flex-col items-center pt-20 pb-16 text-center sm:pt-28 sm:pb-20">
+        <p className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+          <span className="size-1.5 rounded-full bg-primary" />
+          A personal accountability journal + public build log
+        </p>
+        <h1 className="max-w-3xl text-5xl leading-[1.05] font-semibold tracking-tighter text-foreground sm:text-7xl">
+          30 minutes.
+          <br />
+          30 days.
+          <br />
+          <span className="text-primary">One area.</span>
+        </h1>
+        <p className="mt-6 max-w-md text-lg text-muted-foreground">
+          Build the habit. Not the hype.
+        </p>
+        <div className="mt-10">
+          <LandingCta />
+        </div>
+      </section>
+
+      <section className="flex justify-center pb-20">
+        <div className="w-full max-w-xl">
+          <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Your 30 days will look like this</span>
+            <span>day 9 / 30</span>
+          </div>
+          <div className="grid grid-cols-15 grid-rows-2 gap-1.5">
+            {MOCK_DAYS.map((s, i) => (
+              <span
+                key={i}
+                className="flex aspect-square items-center justify-center rounded-md border border-border bg-background text-[10px] sm:text-xs"
+              >
+                <span
+                  className={
+                    s === "done"
+                      ? "text-primary"
+                      : s === "partial"
+                        ? "text-primary/50"
+                        : s === "missed"
+                          ? "text-muted-foreground/50"
+                          : "text-muted-foreground/30"
+                  }
+                >
+                  {s === "done" ? "✓" : s === "partial" ? "◐" : s === "missed" ? "—" : "·"}
+                </span>
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            ✓ completed · ◐ partial · — missed · · not here yet
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <section
+        id="how-it-works"
+        className="border-t border-border/60 py-20 sm:py-24"
+      >
+        <h2 className="mb-12 text-center text-2xl font-semibold tracking-tight sm:text-3xl">
+          The system in five steps
+        </h2>
+        <div className="grid gap-8 sm:grid-cols-2 sm:gap-12 lg:grid-cols-3">
+          {STEPS.map((step) => (
+            <div key={step.n} className="flex flex-col gap-2">
+              <span className="text-4xl font-semibold tracking-tight text-primary/70">
+                {step.n}
+              </span>
+              <h3 className="text-lg font-medium">{step.title}</h3>
+              <p className="text-sm leading-6 text-muted-foreground">
+                {step.body}
+              </p>
+            </div>
+          ))}
+          <div className="flex flex-col justify-end gap-4 rounded-xl border border-border bg-card p-6">
+            <p className="text-sm leading-6 text-muted-foreground">
+              No streaks to maintain. No points to game. Just one area, worked
+              on daily, made visible.
+            </p>
+            <a
+              href="/onboarding"
+              className={`${buttonVariants({ size: "sm" })} w-fit`}
+            >
+              Start today
+            </a>
+          </div>
         </div>
-      </main>
+      </section>
+
+      <footer className="border-t border-border/60 py-10 text-center text-xs text-muted-foreground">
+        <p>
+          Less management. More doing. More reflection. More visible progress.
+        </p>
+      </footer>
     </div>
   );
 }
