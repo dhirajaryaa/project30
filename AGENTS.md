@@ -14,211 +14,148 @@ Core loop:
 
 Design personality: **Calm. Focused. Modern. Minimal. Developer-friendly. Fast.** No dashboards clutter, no gamification, no giant navigation.
 
-**Project 30 is NOT:** a task manager, project management tool, social network, habit gamification app, or AI productivity assistant.
-
 **Project 30 IS:** a simple 30-day accountability journal that turns daily work into visible progress.
+
+**Project 30 IS NOT:** a task manager, social network, habit gamification app, or AI productivity assistant. No database. No authentication. No multi-user anything.
 
 Always optimize for: **Less management. More doing. More reflection. More visible progress.**
 
 ---
 
-## 2. MVP Scope
+## 2. Architecture — Static Site, Content as Markdown
 
-Build the smallest useful version a single person can use for 30 days. **No multi-user SaaS architecture.**
+This is a **fully static Next.js site** (`output: "export"`). It is a single-person public build log. The owner is a developer; they edit files and push to Vercel to publish.
 
-MVP priorities:
+- **No database. No ORM. No auth. No server API routes. No proxy/middleware.**
+- All content lives as plain files in the repo:
+  - `config/config.json` — the owner (user) + the active project (area, goal, start date).
+  - `daily-log/NN.md` — one markdown file per day (`01.md`, `02.md`, …, `30.md`). YAML frontmatter + prose body.
+- `lib/content.ts` reads those files **at build time** and exposes typed getters. Pages are **server components** that call these getters directly.
+- Every page is pre-rendered as static HTML. **Push to deploy** — no runtime dependencies.
 
-1. Creating a 30-day challenge
-2. Adding a daily task/focus
-3. Recording the day's progress
-4. Recording what was learned
-5. Planning the next day
-6. Viewing the complete 30-day journey
-7. Creating a beautiful public/shareable progress page
-8. Sharing daily progress socially
-
-**MVP constraint:** Only **one active Project 30 per user/instance**. Do not build multiple projects, teams, subscriptions, organizations, or social features.
+**The workflow for the owner:** write/update `daily-log/03.md`, tweak `config/config.json`, commit, push. Vercel rebuilds, the site updates. That’s the whole product loop.
 
 ---
 
-## 3. Core Data Model
+## 3. Content Formats
 
-Keep it small. Do not create unnecessary tables.
+### config/config.json
 
-### User
-
-```
-id            string
-username      string
-display_name  string
-avatar_url    string (optional)
-created_at    string (ISO)
-```
-
-### Project
-
-```
-id           string
-user_id      string
-area         string
-goal         string
-start_date   string (YYYY-MM-DD)
-status       "active" | "completed"
-created_at   string (ISO)
-```
-
-### DailyLog
-
-```
-id                string
-project_id        string
-day_number        number (1–30)
-date              string (YYYY-MM-DD)
-task              string
-status            "completed" | "partial" | "missed"
-activity_type     "learning" | "building" | "bug-fix" | "feature" | "ui-design" | "research" | "practice" | "other"
-what_i_did        string
-what_i_learned    string
-what_was_difficult string (optional)
-tomorrow_plan     string
-missed_reason     string (optional, only when status = "missed")
-created_at        string (ISO)
-updated_at        string (ISO)
+```json
+{
+  "user": {
+    "username": "dhirajarya",
+    "display_name": "Dhiraj Arya",
+    "avatar_url": "https://api.dicebear.com/...",
+    "bio": "Self-taught full-stack developer. Building in public.",
+    "socials": {
+      "github": "https://github.com/dhirajaryaa",
+      "twitter": "https://twitter.com/dhirajarya01"
+    }
+  },
+  "project": {
+    "area": "Full-Stack Development",
+    "goal": "Ship 3 real projects and document the journey publicly",
+    "start_date": "2026-09-11",
+    "status": "active"
+  }
+}
 ```
 
-Constraint: `UNIQUE(project_id, day_number)`.
+### daily-log/NN.md
 
-### Constants
+YAML frontmatter + markdown body:
 
-- **Activity types:** Learning, Building, Bug Fix, Feature, UI / Design, Research, Practice, Other
-- **Missed reasons (only shown when status = "missed"):** No time, Work, Family responsibility, Health, Lost focus, Unexpected event, Other
-- **Status sets:** Completed ✓, Missed —, Partial (subtle distinct indicator), Not completed yet ○
-- **Always call it "Missed" — never "Absent".**
+```md
+---
+day: 1
+date: 2026-09-11
+task: "Set up Project 30"
+status: completed
+activity_type: building
+missed_reason: ""
+evidence_url: ""
+---
+
+## What I did
+...
+
+## What I learned
+...
+
+## Tomorrow
+...
+```
+
+- **Frontmatter fields:** `day` (1–30, required), `date` (YYYY-MM-DD), `task`, `status` (completed | partial | missed), `activity_type` (learning | building | bug-fix | feature | ui-design | research | practice | other), optional `missed_reason` (only when status = "missed"), optional `evidence_url`.
+- **Body:** the markdown prose. Rendered with `react-markdown` + `remark-gfm` (headings, lists, code blocks, GFM tables).
+- Day number also comes from the filename; frontmatter `day` must match.
 
 ---
 
-## 4. Pages / Routes
+## 4. Pages / Routes (all static, all public)
 
-### Landing page (`/`)
-- Hero: "30 minutes. 30 days. One area." with sub-line "Build the habit. Not the hype."
-- 5-step explanation of the system.
-- Primary CTA: "Start Project 30". Secondary CTA: "View public progress".
-- If a user already has a project, CTA should route to their dashboard.
+- **`/`** — Landing. Hero, 5-step system, live day grid pulled from `daily-log/`.
+- **`/journey`** — Timeline of all 30 days (✓ completed, ◐ partial, — missed, ○ not yet) + entries list.
+- **`/day/[day]`** — Journal entry page (readable, share CTA). Static params from `daily-log/`.
+- **`/share/[day]`** — Beautiful shareable progress card (screenshot/social preview).
+- **`/u/[username]`** — Public profile: avatar, display name, 🚩 goal, area, day X/30, progress bar, completed/partial/missed counts, 30-day timeline, recent entries, share buttons.
+- **`/u/[username]/day/[day]`** — Public single-day entry.
 
-### Onboarding (`/onboarding`)
-Fields: **Area**, **30-day goal**, **Start date** (default today).
-Only allow one active project per user. Username is the public identity (`/u/{username}`).
-
-### Dashboard (`/dashboard`)
-Immediately answer: What day am I on? What is today's task? How many days completed? What did I do recently? What is my next action?
-- Day number / 30, progress bar, completed/partial/missed counts.
-- Today's focus card + "Complete today's check-in" CTA (or a link to view today's entry if already done).
-- Recent progress list (last few entries).
-- Link to full journey.
-
-### Daily Check-in (`/check-in`)
-The **center of the product**. Today's entry (create or update). Fields:
-- Today's task
-- Status (Completed / Partial / Missed)
-- What did you do?
-- What did you learn?
-- What was difficult? (optional)
-- What will you do tomorrow?
-- Activity type
-- Missed reason (conditional, only when status = "missed")
-
-### Timeline / Journey (`/journey`)
-Grid or list of all 30 days:
-- ✓ = Completed, — = Missed, ○ = Not completed yet, Partial = subtle distinct indicator (e.g. half circle / lighter mark).
-- Clicking a completed day opens its daily entry.
-
-### Daily Entry page (`/day/[day]` or `/log/[day]`)
-Beautiful readable journal page: Day N / 30, task, status, what I did, what I learned, what was difficult, tomorrow plan. With a share CTA.
-
-### Public profile (`/u/[username]`)
-P-0 feature. Shows: username, display name, avatar, goal, area, current day, completion progress, completed/partial/missed counts, 30-day timeline, recent entries.
-Must look good enough for someone to discover Project 30 through it.
-**Never expose private/undefined data (e.g. `what_was_difficult`, missed reasons) unless intentional.** Public daily entries should show the journal fields the user wrote for that day.
-
-### Share page (`/share/[day]` or a card view)
-P-0 feature: generates a beautiful shareable progress card ("Day 7 / 30 • Completed • task • area • @username • URL"). Typography, spacing, hierarchy > decoration. Looks good as a screenshot and social preview.
-
-### Social sharing
-- Copy link button.
-- Native Web Share API where supported.
-- Shareable public URL.
-- Open Graph metadata + Twitter/X + LinkedIn-compatible previews (via `metadata` API / `opengraph-image`).
-
-Do NOT build direct integrations for every social network. **The URL is the sharing mechanism.**
+Social sharing is **the public URL + OG image**. No per-network integrations.
 
 ---
 
-## 5. Meaningful Discovery (no vanity metrics)
+## 5. Tech Stack & Decisions
 
-Public profile must answer: *Who is this? What are they working on? What day are they on? What did they actually do?*
-
-Do NOT add: followers, likes, comments, leaderboards, karma, points, badges, streak rewards.
-
----
-
-## 6. Tech Stack & Decisions
-
-- **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**, **shadcn/ui** (custom theme already in `app/globals.css`, warm neutral + terracotta accent `#e08a5c`).
-- **Vercel deployment**.
-- Data layer: **MongoDB (Atlas) via Mongoose**. Queries are centralized in `lib/queries.ts`; every mutation goes through server actions in `lib/actions.ts` and is abstracted so a different DB can be swapped later without rewriting pages. The storage layer abstraction (`lib/storage.ts`) exists only as read-side utilities (date math, sorting) — not a data source. Date handling uses **UTC/local day boundaries** consistently (compute "today" in the client).
-- **Auth:** **better-auth** with **Google social sign-in** (`lib/auth.ts`, `lib/auth-client.ts`). Protected routes are enforced twice: `proxy.ts` (redirects unauthenticated requests to `/sign-in`) and inside every server action (`requireAuthId()` runs the session check **before any database access**). Ownership is enforced on every read/write (all queries scoped by the session user id → profile → project). User data lives in ONE table: the better-auth `user` collection (id = `_id`, display name = `name`, custom fields `username`/`avatar_url` via `additionalFields`); there is no separate mongoose `users` collection. `Project.user_id` is that user id string. Public pages (`/u/[username]`, `/u/[username]/day/[day]`, share/OG images) stay public; the public DTO strips private fields (`what_was_difficult`, `missed_reason`). Site URL is read from `SITE_PUBLIC_URL` in `lib/site.ts` and drives `metadataBase`, auth `baseURL`, and share links.
-- **Security rule:** never trust the client — verify the session server-side before any DB read or write, and never leak data belonging to a session other than the caller.
-- **Package manager: pnpm.** Use `pnpm dlx shadcn add ...` for shadcn components.
-- Do NOT implement GitHub sync, screen-time verification, proof-of-work, AI generation, follower/like systems, teams, or public community in this version.
+- **Next.js (App Router, `output: "export"`)**, **TypeScript**, **Tailwind CSS v4**, **shadcn/ui** (custom theme in `app/globals.css`, warm neutral + terracotta accent `#e08a5c`).
+- **Vercel deployment** (`pnpm build` → static export).
+- **react-markdown + remark-gfm** for rendering journal prose.
+- All content getters live in `lib/content.ts` (sync, build-time fs reads) and `lib/storage.ts` (pure helpers: sort, count, lookup). `lib/dates.ts` handles day math (`currentDayNumber` clamps to 0–30; pre-start projects show 0).
+- Site URL from `SITE_PUBLIC_URL` in `lib/site.ts` (drives `metadataBase` and share links).
+- Code style: **no comments** unless asked. Keep it minimal.
+- **Package manager: pnpm.**
 
 ---
 
-## 7. Design & UX Rules
+## 6. Design & UX Rules
 
 - Calm, focused, minimal. Avoid excessive cards, gaudy decoration, dashboards clutter.
 - Progress must be **visible** (large day number, clean progress bar).
-- Daily check-in should take **less than a few minutes**.
-- Use generous whitespace, strong typographic hierarchy, low-fidelity color (the orange primary is the accent; everything else quiet).
-- Every public page must render well as a screenshot.
-- Mobile responsive.
+- Generous whitespace, strong typographic hierarchy, low-fidelity color (terracotta primary as the accent; everything else quiet).
+- Every public page must render well as a screenshot. Mobile responsive.
+- **OG images matter** — every key page gets a clean 1200×630 Open Graph PNG, generated **at build time** by `scripts/generate-og.cjs` (satori + @resvg/resvg-js) into `public/og/`. The `prebuild`/`predev` npm hooks run it automatically. Metadata on each page points to these static PNGs (`og:image` + `twitter:card`), so Twitter, LinkedIn, Facebook, and WhatsApp all render the preview. Do not replace this with Next `opengraph-image` route handlers — they are unreliable with `output: "export"` in Next 16.
+
+**Status vocabulary (always):** Completed ✓, Missed —, Partial ◐, Not completed yet ○. Always call it **"Missed"**, never "Absent".
 
 ---
 
-## 8. AI Assistance Rules (future)
+## 7. AI Assistance Rules (future)
 
-AI must NOT auto-generate fake progress. It may later help with summarizing reflections / suggesting tomorrow's plan / final 30-day reflection — but **user's real work stays user-controlled**. AI is not the core.
+AI must NOT auto-generate fake progress. It may help summarize reflections / suggest tomorrow's plan — but the **user's real work stays user-controlled**.
 
 ---
 
-## 9. Definition of Done
-
-MVP is complete when a real person can:
+## 8. Definition of Done
 
 1. Open the app
-2. Create a Project 30
-3. Define the 30-day goal
-4. Add today's task
-5. Mark the day Completed/Partial/Missed
-6. Write what they did
-7. Write what they learned
-8. Write tomorrow's plan
-9. See the 30-day timeline
-10. View a beautiful public progress page
-11. Open an individual daily entry publicly
-12. Generate/share today's progress
-13. Copy a public link
-14. Deploy the application
+2. See the landing page
+3. See the public profile (`/u/[username]`)
+4. Browse the 30-day timeline (`/journey`)
+5. Open any logged day (`/day/N`, `/u/[username]/day/N`)
+6. Generate/share a day (`/share/N`, copy link, native share)
+7. Social previews (OG images) render correctly
+8. `pnpm build` produces a static export; push to Vercel to deploy
 
-**When all of these work, STOP. Do not add extra features just because they are technically interesting.**
+**STOP when all of these work. Do not add features just because they are technically interesting.**
 
 ---
 
-## 10. Commands
+## 9. Commands
 
 ```bash
 pnpm dev        # run dev server
-pnpm build      # production build
+pnpm build      # production static export (output: export)
 pnpm lint       # eslint
-pnpm start      # serve production build
-pnpm dlx shadcn add <component>   # add a shadcn component
+pnpm exec tsc --noEmit   # typecheck
 ```

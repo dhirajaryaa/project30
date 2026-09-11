@@ -7,7 +7,7 @@ export function pageMetadata(input: {
   image?: string;
   noindex?: boolean;
 }): Metadata {
-  const image = input.image ?? "/opengraph-image";
+  const image = input.image ?? "/og/home.png";
   return {
     title: input.title,
     description: input.description,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppProvider } from "@/components/app-provider";
 import { SiteHeader } from "@/components/site-header";
+import { getUser } from "@/lib/content";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -38,13 +38,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "Project 30",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+    images: [{ url: "/og/home.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Project 30",
     description: "30 minutes. 30 days. One area.",
-    images: ["/opengraph-image"],
+    images: ["/og/home.png"],
   },
   robots: {
     index: true,
@@ -57,6 +57,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = getUser();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -67,14 +69,16 @@ export default function RootLayout({
             __html: `try{var t=localStorage.getItem("project30:theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light";}catch(e){}`,
           }}
         />
-        <AppProvider>
-          <div className="flex min-h-screen flex-col">
-            <SiteHeader />
-            <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 sm:px-6">
-              {children}
-            </main>
-          </div>
-        </AppProvider>
+        <div className="flex min-h-screen flex-col">
+          <SiteHeader
+            username={user.username}
+            displayName={user.display_name}
+            avatarUrl={user.avatar_url}
+          />
+          <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 sm:px-6">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );

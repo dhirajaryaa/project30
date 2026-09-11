@@ -1,25 +1,23 @@
-"use client";
-
-import * as React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useApp } from "@/components/app-provider";
-import { Loader } from "@/components/loader";
+import { StatusMark } from "@/components/status-mark";
 import { Timeline } from "@/components/timeline";
-import { buttonVariants } from "@/components/ui/button";
+import { getAllLogs, getProject, getUser } from "@/lib/content";
+import { pageMetadata } from "@/lib/metadata";
 import { countByStatus, sortLogs } from "@/lib/storage";
-import { cn } from "cn";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Journey",
+  description:
+    "The complete 30-day Project 30 journey — every day, one view.",
+  url: "/journey",
+  image: "/og/journey.png",
+});
 
 export default function JourneyPage() {
-  const { status, project, user, logs } = useApp();
-  const router = useRouter();
-
-  React.useEffect(() => {
-    if (status === "unauthenticated") router.replace("/sign-in");
-  }, [status, router]);
-
-  if (status === "loading") return <Loader />;
-  if (status !== "ready" || !project || !user) return <Loader />;
+  const user = getUser();
+  const project = getProject();
+  const logs = getAllLogs();
 
   const counts = countByStatus(logs);
   const filled = sortLogs(logs);
@@ -45,14 +43,9 @@ export default function JourneyPage() {
         <h2 className="w-full text-lg font-medium">Entries so far</h2>
         {filled.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No entries yet.{" "}
-            <Link
-              href="/check-in"
-              className="text-foreground underline underline-offset-4"
-            >
-              Log day 1
-            </Link>
-            .
+            No entries yet. Add files to{" "}
+            <code className="rounded bg-muted px-1 py-0.5">daily-log/</code>{" "}
+            and rebuild.
           </p>
         ) : (
           <ul className="w-full divide-y divide-border border-y border-border">
@@ -60,15 +53,15 @@ export default function JourneyPage() {
               .slice()
               .reverse()
               .map((log) => (
-                <li key={log.id}>
+                <li key={log.day}>
                   <Link
-                    href={`/day/${log.day_number}`}
+                    href={`/day/${log.day}`}
                     className="flex items-center justify-between gap-4 py-3 transition-colors hover:bg-muted/40"
                   >
                     <span className="flex min-w-0 items-center gap-3">
-                      <StatusTotem status={log.status} />
+                      <StatusMark status={log.status} className="text-lg" />
                       <span className="text-sm text-muted-foreground">
-                        Day {log.day_number}
+                        Day {log.day}
                       </span>
                       <span className="truncate text-sm font-medium">
                         {log.task || "Untitled"}
@@ -84,29 +77,16 @@ export default function JourneyPage() {
         )}
       </div>
 
-      <div className="mt-12">
-        <Link
-          href="/check-in"
-          className={cn(buttonVariants({ size: "lg" }))}
-        >
-          Complete today&apos;s check-in
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function StatusTotem({ status }: { status: string }) {
-  return (
-    <span
-      className={cn(
-        "w-4 text-center text-lg",
-        status === "completed" && "text-primary",
-        status === "partial" && "text-primary/60",
-        status === "missed" && "text-muted-foreground/70"
+      {user.username && (
+        <div className="mt-12">
+          <Link
+            href={`/u/${user.username}`}
+            className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          >
+            View public profile
+          </Link>
+        </div>
       )}
-    >
-      {status === "completed" ? "✓" : status === "partial" ? "◐" : "—"}
-    </span>
+    </div>
   );
 }

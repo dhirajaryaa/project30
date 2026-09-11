@@ -1,38 +1,49 @@
-"use client";
-
-import * as React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useApp } from "@/components/app-provider";
-import { Loader } from "@/components/loader";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ShareButtons } from "@/components/share-buttons";
+import { StatusMark } from "@/components/status-mark";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  activityTypeLabel,
-  missedReasonLabel,
-} from "@/lib/constants";
+import { activityTypeLabel } from "@/lib/constants";
+import { getAllLogs, getLogByDay, getProject, getUser } from "@/lib/content";
 import { formatNice } from "@/lib/dates";
+import { pageMetadata } from "@/lib/metadata";
 import { absoluteUrl } from "@/lib/site";
 import { cn } from "cn";
 
-export default function DayPage({
+export async function generateStaticParams() {
+  const logs = getAllLogs();
+  return logs.map((l) => ({ day: String(l.day) }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ day: string }>;
+}): Promise<Metadata> {
+  const { day } = await params;
+  const n = Math.trunc(Number(day));
+  const log = getLogByDay(getAllLogs(), n);
+  return pageMetadata({
+    title: log ? `Day ${n} / 30 — ${log.task}` : `Day ${n} / 30`,
+    description: log
+      ? `${statusLabel(log.status)} · ${log.task} on Project 30.`
+      : `Day ${n} of the 30-day Project 30 journey.`,
+    url: `/day/${day}`,
+    image: `/og/day/${encodeURIComponent(day)}.png`,
+  });
+}
+
+export default async function DayPage({
   params,
 }: {
   params: Promise<{ day: string }>;
 }) {
-  const { day: dayParam } = React.use(params);
+  const { day: dayParam } = await params;
   const day = Number(dayParam);
-  const { status, project, user, logs, getLog } = useApp();
-  const router = useRouter();
-
-  React.useEffect(() => {
-    if (status === "unauthenticated") router.replace("/sign-in");
-  }, [status, router]);
-
-  if (status === "loading") return <Loader />;
-  if (status !== "ready" || !project || !user) return <Loader />;
-
-  const log = getLog(day);
+  const user = getUser();
+  const project = getProject();
+  const log = getLogByDay(getAllLogs(), day);
 
   if (!log) {
     return (
@@ -44,91 +55,43 @@ export default function DayPage({
           Nothing logged for day {day}
         </h1>
         <p className="max-w-md text-muted-foreground">
-          {!log && logs.length === 0
-            ? "Your journal is still empty — day 1 is waiting."
-            : "This day doesn't have an entry yet."}
+          This day doesn&apos;t have an entry yet.
         </p>
-        <Link href="/check-in" className={buttonVariants()}>
-          Complete today&apos;s check-in
-        </Link>
       </div>
     );
   }
 
-  const shareUrl = absoluteUrl(`/u/${user.username}/day/${log.day_number}`);
+  const shareUrl = absoluteUrl(`/u/${user.username}/day/${log.day}`);
 
   return (
     <article className="mx-auto max-w-2xl pt-10 sm:pt-16">
       <header className="mb-10 border-b border-border pb-8">
         <p className="text-sm font-semibold tracking-widest text-primary">
-          DAY {log.day_number} / 30
+          DAY {log.day} / 30
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
           {log.task}
         </h1>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <StatusIcon status={log.status} />
+            <StatusMark status={log.status} />
             <span>{statusLabel(log.status)}</span>
           </span>
           <span>{activityTypeLabel(log.activity_type)}</span>
           <span>{formatNice(log.date)}</span>
-          <span>{log.day_number === 1 ? "Day one" : `Day ${log.day_number}`}</span>
+          <span>Day {log.day}</span>
         </div>
       </header>
 
-      <div className="flex flex-col gap-10">
-        {log.what_i_did && (
-          <JournalSection title="What I did" body={log.what_i_did} />
-        )}
-        {log.what_i_learned && (
-          <JournalSection title="What I learned" body={log.what_i_learned} />
-        )}
-        {log.what_was_difficult && (
-          <JournalSection title="What was difficult" body={log.what_was_difficult} />
-        )}
-        {log.tomorrow_plan && (
-          <JournalSection title="Tomorrow" body={log.tomorrow_plan} />
-        )}
-        {log.status === "missed" && log.missed_reason && (
-          <JournalSection
-            title="Why I missed"
-            body={missedReasonLabel(log.missed_reason)}
-          />
-        )}
-        {log.evidence_url && (
-          <JournalSection
-            title="Proof of work"
-            body={
-              <a
-                href={log.evidence_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary underline underline-offset-4"
-              >
-                {log.evidence_url}
-              </a>
-            }
-          />
-        )}
-      </div>
+      <MarkdownRenderer body={log.body} />
 
       <footer className="mt-14 flex flex-col gap-6 border-t border-border pt-8">
         <div className="flex flex-wrap items-center gap-3">
           <Link
-            href={`/share/${log.day_number}`}
+            href={`/share/${log.day}`}
             className={buttonVariants()}
           >
             Share this day
-          </Link>
-          <Link
-            href="/check-in"
-            className={cn(
-              buttonVariants({ variant: "ghost" }),
-              "text-muted-foreground"
-            )}
-          >
-            Edit this entry
           </Link>
           <Link
             href="/journey"
@@ -142,43 +105,11 @@ export default function DayPage({
         </div>
         <ShareButtons
           url={shareUrl}
-          title={`Day ${log.day_number} / 30 — ${log.task}`}
-          text={`Day ${log.day_number} / 30 • ${statusLabel(log.status)} • ${log.task} • ${project.area} • @${user.username} on Project 30`}
+          title={`Day ${log.day} / 30 — ${log.task}`}
+          text={`Day ${log.day} / 30 • ${statusLabel(log.status)} • ${log.task} • ${project.area} • @${user.username} on Project 30`}
         />
       </footer>
     </article>
-  );
-}
-
-function JournalSection({
-  title,
-  body,
-}: {
-  title: string;
-  body: React.ReactNode;
-}) {
-  return (
-    <section>
-      <h2 className="mb-2 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-        {title}
-      </h2>
-      <p className="whitespace-pre-wrap text-lg leading-8">{body}</p>
-    </section>
-  );
-}
-
-function StatusIcon({ status }: { status: string }) {
-  return (
-    <span
-      className={cn(
-        "w-4",
-        status === "completed" && "text-primary",
-        status === "partial" && "text-primary/60",
-        status === "missed" && "text-muted-foreground/70"
-      )}
-    >
-      {status === "completed" ? "✓" : status === "partial" ? "◐" : "—"}
-    </span>
   );
 }
 

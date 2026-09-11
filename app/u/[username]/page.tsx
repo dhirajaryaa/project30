@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AvatarEditor } from "@/components/avatar";
+import { Avatar } from "@/components/avatar";
 import { ShareButtons } from "@/components/share-buttons";
 import { StatusMark } from "@/components/status-mark";
 import { Timeline } from "@/components/timeline";
 import { Progress } from "@/components/ui/progress";
-import { buttonVariants } from "@/components/ui/button";
 import { avatarUrl } from "@/lib/avatar";
+import { getPublicProfile } from "@/lib/content";
 import { formatNice } from "@/lib/dates";
-import { getPublicProfile } from "@/lib/queries";
+import { absoluteUrl } from "@/lib/site";
 import { sortLogs } from "@/lib/storage";
 
-export const dynamic = "force-dynamic";
+export async function generateStaticParams() {
+  const { getUser } = await import("@/lib/content");
+  return [{ username: getUser().username }];
+}
 
 export async function generateMetadata({
   params,
@@ -20,10 +23,8 @@ export async function generateMetadata({
   params: Promise<{ username: string }>;
 }): Promise<Metadata> {
   const { username } = await params;
-  const profile = await getPublicProfile(username);
-  if (!profile) {
-    return { title: "Not found", robots: { index: false } };
-  }
+  const profile = getPublicProfile(username);
+  if (!profile) return { title: "Not found", robots: { index: false } };
   const title = `${profile.user.display_name} (@${profile.user.username}) — Project 30`;
   const description = `${profile.project.goal} · ${profile.project.area} · Day ${profile.currentDay}/30 · ${profile.counts.completed} days completed.`;
   const url = `/u/${profile.user.username}`;
@@ -36,14 +37,15 @@ export async function generateMetadata({
       description,
       url,
       type: "profile",
+      siteName: "Project 30",
       username: profile.user.username,
-      images: [{ url: `/u/${profile.user.username}/opengraph-image`, width: 1200, height: 630 }],
+      images: [{ url: `/og/u/${profile.user.username}.png`, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`/u/${profile.user.username}/opengraph-image`],
+      images: [`/og/u/${profile.user.username}.png`],
     },
   };
 }
@@ -54,22 +56,22 @@ export default async function PublicProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const profile = await getPublicProfile(username);
+  const profile = getPublicProfile(username);
   if (!profile) notFound();
 
   const { user, project, logs, currentDay, counts, progress } = profile;
   const recent = sortLogs(logs).slice(-4).reverse();
   const dayHref = (day: number) => `/u/${user.username}/day/${day}`;
   const profileUrl = `/u/${user.username}`;
+  const shareUrl = absoluteUrl(profileUrl);
 
   return (
     <div className="mx-auto max-w-3xl pt-10 sm:pt-16">
       <header className="mb-10">
         <div className="flex items-center gap-5">
-          <AvatarEditor
-            ownerId={user.id}
+          <Avatar
+            url={user.avatar_url ?? avatarUrl(user.username)}
             username={user.username}
-            avatarUrl={user.avatar_url ?? avatarUrl(user.username)}
             size={64}
           />
           <div className="min-w-0">
@@ -85,6 +87,9 @@ export default async function PublicProfilePage({
                 @{user.username}
               </span>
             </h1>
+            {user.bio && (
+              <p className="mt-1 text-sm text-muted-foreground">{user.bio}</p>
+            )}
           </div>
         </div>
       </header>
@@ -132,7 +137,7 @@ export default async function PublicProfilePage({
         <h2 className="mb-4 font-medium">The journey</h2>
         <Timeline logs={logs} dayHref={dayHref} />
         <p className="mt-3 text-xs text-muted-foreground">
-          Started {formatNice(project.start_date)}. Logged entries are public.
+          Started {formatNice(project.start_date)}.
         </p>
       </section>
 
@@ -145,15 +150,15 @@ export default async function PublicProfilePage({
         ) : (
           <ul className="divide-y divide-border border-y border-border">
             {recent.map((log) => (
-              <li key={log.id}>
+              <li key={log.day}>
                 <Link
-                  href={dayHref(log.day_number)}
+                  href={dayHref(log.day)}
                   className="flex items-center justify-between gap-4 py-3 transition-colors hover:bg-muted/40"
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <StatusMark status={log.status} className="text-lg" />
                     <span className="text-sm text-muted-foreground">
-                      Day {log.day_number}
+                      Day {log.day}
                     </span>
                     <span className="truncate text-sm font-medium">
                       {log.task || "Untitled"}
@@ -172,30 +177,10 @@ export default async function PublicProfilePage({
       <section className="mt-12 border-t border-border pt-8">
         <p className="mb-3 text-sm font-medium">Share this profile</p>
         <ShareButtons
-          url={profileUrl}
+          url={shareUrl}
           title={`${user.display_name} — Day ${currentDay}/30 on Project 30`}
           text={`${user.display_name} is on day ${currentDay}/30: ${project.goal} · ${project.area} · @${user.username}`}
         />
-      </section>
-
-      <section className="mt-16 rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
-        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          30 minutes. 30 days. One area.
-        </h2>
-        <p className="mt-2 text-muted-foreground">
-          Build the habit. Not the hype.
-        </p>
-        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/onboarding" className={buttonVariants({ size: "lg", className: "px-6 text-base" })}>
-            Start your own Project 30
-          </Link>
-          <Link
-            href="/"
-            className={buttonVariants({ variant: "outline", size: "lg", className: "px-6 text-base" })}
-          >
-            How it works
-          </Link>
-        </div>
       </section>
     </div>
   );

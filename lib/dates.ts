@@ -27,7 +27,7 @@ export function dayNumberForDate(startDate: string, date: string): number {
 }
 
 export function currentDayNumber(startDate: string): number {
-  return Math.min(Math.max(dayNumberForDate(startDate, todayString()), 1), 30);
+  return Math.min(Math.max(dayNumberForDate(startDate, todayString()), 0), 30);
 }
 
 export function formatNice(dateStr: string): string {

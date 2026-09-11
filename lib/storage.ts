@@ -4,7 +4,7 @@ export function getLogByDay(
   logs: DailyLog[],
   day: number
 ): DailyLog | undefined {
-  return logs.find((l) => l.day_number === day);
+  return logs.find((l) => l.day === day);
 }
 
 export function getLogByDate(
@@ -15,7 +15,7 @@ export function getLogByDate(
 }
 
 export function sortLogs(logs: DailyLog[]): DailyLog[] {
-  return [...logs].sort((a, b) => a.day_number - b.day_number);
+  return [...logs].sort((a, b) => a.day - b.day);
 }
 
 export function countByStatus(logs: DailyLog[]) {
@@ -27,7 +27,7 @@ export function countByStatus(logs: DailyLog[]) {
 }
 
 export function statusSet(logs: DailyLog[]): Set<number> {
-  return new Set(logs.map((l) => l.day_number));
+  return new Set(logs.map((l) => l.day));
 }
 
 export const VALID_LOG_STATUS: LogStatus[] = ["completed", "partial", "missed"];

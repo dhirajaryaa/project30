@@ -20,15 +20,33 @@ Choose one area  →  Set 30-day goal  →  Today's task
 
 ---
 
-## Features
+## How it works
 
-- **Onboarding** — define your area, your 30-day goal, and your start date (one active project per user).
-- **Dashboard** — immediately answers: *What day am I on? What's today's task? How many days completed? What did I do recently?*
-- **Daily check-in** — the center of the product. Record today's task, status (Completed / Partial / Missed), what you did, what you learned, what was difficult, and tomorrow's plan. Takes a few minutes.
-- **30-day timeline** — the full journey with clear status marks: ✓ completed · — missed · ○ not completed · ⚡ partial.
-- **Public profile** — `/u/{username}` shows your goal, current day, completion progress, timeline, and recent entries. Built to look good enough to be discovered through.
-- **Share cards** — beautiful, shareable daily progress cards with copy-link, native Web Share, and Open Graph / X / LinkedIn preview metadata.
-- **No vanity metrics** — no followers, likes, leaderboards, points, or badges. Just accountability and visible progress.
+Everything is content. This is a fully **static site** — no database, no auth.
+
+1. Edit `config/config.json` to set your name, socials, and the project (area, goal, start date).
+2. Write one markdown file per day in `daily-log/01.md` … `daily-log/30.md` (frontmatter + prose).
+3. Commit and push to Vercel. The site rebuilds as static HTML.
+
+```
+config/config.json     # you + your project
+daily-log/01.md        # day 1 entry (yaml frontmatter + markdown)
+daily-log/02.md        # day 2 entry
+...
+```
+
+---
+
+## Pages
+
+- **`/`** — Landing page with live 30-day grid.
+- **`/journey`** — The full 30-day timeline: ✓ completed · ◐ partial · — missed · ○ not yet.
+- **`/day/N`** — Journal entry page (rendered markdown).
+- **`/share/N`** — Shareable daily progress card (copy link, native Web Share, X/LinkedIn).
+- **`/u/{username}`** — Public profile: 🚩 goal, area, day X/30, progress bar, counts, timeline, recent entries, share buttons.
+- **`/u/{username}/day/N`** — Public single-day entry.
+
+Every page generates a clean **Open Graph image** at build time for social previews.
 
 ---
 
@@ -36,32 +54,28 @@ Choose one area  →  Set 30-day goal  →  Today's task
 
 | Layer      | Choice |
 | ---------- | ------ |
-| Framework  | Next.js 16 (App Router) |
+| Framework  | Next.js 16 (App Router, `output: "export"`) |
 | Language   | TypeScript |
 | Styling    | Tailwind CSS v4 |
 | UI         | shadcn/ui (custom warm-neutral + terracotta theme in `app/globals.css`) |
-| Data       | MongoDB Atlas via Mongoose; all writes through server actions |
-| Auth       | better-auth with Google social sign-in; `proxy.ts` protects `/dashboard`, `/check-in`, `/journey`, `/day/*`, `/share/*`, `/onboarding` |
-| Deploy     | Vercel |
+| Content    | Markdown (`daily-log/`) + JSON (`config/`), read at build time by `lib/content.ts` |
+| Rendering  | react-markdown + remark-gfm |
+| OG images  | satori + @resvg/resvg-js (`scripts/generate-og.cjs` → `public/og/`, runs on `prebuild`/`predev`) |
+| Deploy     | Vercel (static export) |
 
-Storage is abstracted behind `lib/queries.ts` + server actions in `lib/actions.ts`, so it can be swapped (e.g. Postgres/SQLite) later **without rewriting pages**. Every server action authenticates the session **before touching the database**, and reads/writes are scoped to the signed-in user's own profile/project. The public layer (`/u/{username}`, `/u/{username}/day/[day]`, OG images) deliberately exposes only what the user wrote, and strips private fields (`what_was_difficult`, `missed_reason`) unless the owner is signed in.
+---
 
 ## Getting started
 
 ```bash
-cp .env.example .env.local   # then fill in the values
+cp .env.example .env.local   # set SITE_PUBLIC_URL (localhost:3000 for local dev)
 pnpm install
 pnpm dev
 ```
 
 Environment variables:
 
-- `MONGODB_URI` — MongoDB connection string.
-- `AUTH_SECRET` — secret for better-auth (run `openssl rand -base64 32`).
-- `SITE_PUBLIC_URL` — the app base URL (canonical URLs, OG metadata, auth base). Set to the production domain on Vercel.
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth app credentials (sign-in via https://console.cloud.google.com → APIs & Services → Credentials → OAuth 2.0 Client IDs → Web application; add `{SITE_PUBLIC_URL}/api/auth/callback/google` and `{SITE_PUBLIC_URL}/api/auth/error` to redirect URIs).
-
-Open [http://localhost:3000](http://localhost:3000).
+- `SITE_PUBLIC_URL` — the app base URL (canonical URLs, OG metadata, share links). Set to the production domain on Vercel.
 
 ---
 
@@ -69,10 +83,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
 pnpm dev        # run dev server
-pnpm build      # production build
+pnpm build      # production static export (output: export)
 pnpm lint       # eslint
-pnpm start      # serve production build
-pnpm dlx shadcn add <component>   # add a shadcn component
+pnpm exec tsc --noEmit   # typecheck
 ```
 
 ---
@@ -80,35 +93,26 @@ pnpm dlx shadcn add <component>   # add a shadcn component
 ## Project structure
 
 ```
-app/            # App Router pages & layouts
-  page.tsx          # Landing page
-  sign-in/          # Sign in (Google)
-  onboarding/       # Project creation flow
-  dashboard/        # Dashboard
-  check-in/         # Daily check-in
-  journey/          # 30-day timeline
-  day/[day]/        # Daily entry page
-  u/[username]/     # Public profile
-  share/[day]/      # Shareable progress card
-  api/auth/[all]/   # better-auth handler
-components/     # Reusable components (ui/ + product components)
-lib/            # Types, DB models, queries, server actions, utils
-proxy.ts        # Route protection (Next.js proxy/middleware)
+app/                  # App Router pages
+  page.tsx                # Landing page
+  journey/                # 30-day timeline
+  day/[day]/              # Daily entry page
+  share/[day]/            # Shareable progress card
+  u/[username]/           # Public profile (+ daily entries)
+  u/[username]/day/[day]/ # Public single-day entry
+config/
+  config.json             # user + project data
+daily-log/
+  01.md … 30.md           # one markdown file per day
+components/           # Reusable UI + markdown renderer, OG card
+lib/                  # content.ts (fs reads), storage, dates, metadata
 ```
-
----
-
-## Data model
-
-- **User** — single table = the better-auth `user` collection: _id (the user id), email, name (display name), username, avatar_url, createdAt, updatedAt
-- **Project** — id, user_id (string = better-auth user id), area, goal, start_date, status, created_at
-- **DailyLog** — id, project_id, day_number (1–30), date, task, status, activity_type, what_i_did, what_i_learned, what_was_difficult, tomorrow_plan, missed_reason, evidence_url, created_at, updated_at — unique per `(project_id, day_number)`
 
 ---
 
 ## Definition of Done
 
-The MVP is complete when one real person can open the app, create their Project 30, log each day for 30 days, view their full timeline, share a beautiful public progress page, and generate/share a daily progress card. When all of that works, **stop building** — no extra features.
+The MVP is complete when one real person can edit `config/` + `daily-log/`, push to Vercel, see the landing page, browse the 30-day timeline, open any logged day, share a beautiful public progress page, and share a daily progress card with correct OG previews. When all of that works, **stop building** — no extra features.
 
 ---
 

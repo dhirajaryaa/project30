@@ -1,23 +1,3 @@
-export type User = {
-  id: string;
-  username: string;
-  display_name: string;
-  avatar_url?: string;
-  created_at: string;
-};
-
-export type ProjectStatus = "active" | "completed";
-
-export type Project = {
-  id: string;
-  user_id: string;
-  area: string;
-  goal: string;
-  start_date: string; // YYYY-MM-DD
-  status: ProjectStatus;
-  created_at: string;
-};
-
 export type LogStatus = "completed" | "partial" | "missed";
 
 export type ActivityType =
@@ -39,48 +19,52 @@ export type MissedReason =
   | "unexpected-event"
   | "other";
 
+export type ProjectStatus = "active" | "completed";
+
+export type User = {
+  username: string;
+  display_name: string;
+  avatar_url?: string;
+  bio?: string;
+  socials?: Record<string, string>;
+};
+
+export type Project = {
+  area: string;
+  goal: string;
+  start_date: string; // YYYY-MM-DD
+  status: ProjectStatus;
+};
+
 export type DailyLog = {
-  id: string;
-  project_id: string;
-  day_number: number; // 1-30
+  day: number; // 1-30
   date: string; // YYYY-MM-DD
   task: string;
   status: LogStatus;
   activity_type: ActivityType;
-  what_i_did: string;
-  what_i_learned: string;
-  what_was_difficult?: string;
-  tomorrow_plan: string;
   missed_reason?: MissedReason;
   evidence_url?: string;
-  created_at: string;
-  updated_at: string;
+  body: string; // markdown prose
 };
 
-export type AppData = {
-  user: User | null;
-  project: Project | null;
+export type SiteData = {
+  user: User;
+  project: Project;
   logs: DailyLog[];
 };
 
-export type OnboardInput = {
-  username: string;
-  display_name: string;
-  area: string;
-  goal: string;
-  start_date: string;
+export type PublicProfile = {
+  user: User;
+  project: Project;
+  logs: DailyLog[];
+  currentDay: number;
+  counts: { completed: number; partial: number; missed: number };
+  progress: number;
+  todayLog: DailyLog | null;
 };
 
-export type SaveLogInput = {
-  day_number: number;
-  date: string;
-  task: string;
-  status: LogStatus;
-  activity_type: ActivityType;
-  what_i_did: string;
-  what_i_learned: string;
-  what_was_difficult?: string;
-  tomorrow_plan: string;
-  missed_reason?: MissedReason;
-  evidence_url?: string;
+export type PublicDay = {
+  user: User;
+  project: Project;
+  log: DailyLog;
 };

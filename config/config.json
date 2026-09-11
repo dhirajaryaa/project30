@@ -1,0 +1,21 @@
+{
+  "user": {
+    "username": "dhirajarya",
+    "display_name": "Dhiraj Arya",
+    "avatar_url": "https://dhirajarya.in/assets/hero.webp",
+    "bio": "Self-taught full-stack developer. Building in public.",
+    "socials": {
+      "github": "https://github.com/dhirajaryaa",
+      "twitter": "https://twitter.com/dhirajarya01",
+      "linkedin": "https://linkedin.com/in/dhirajarya01",
+      "youtube": "https://youtube.com/@dhirajaryaa",
+      "instagram": "https://instagram.com/dhirajarya01"
+    }
+  },
+  "project": {
+    "area": "Full-Stack Development",
+    "goal": "Ship 3 real projects and document the journey publicly",
+    "start_date": "2026-09-11",
+    "status": "active"
+  }
+}

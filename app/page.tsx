@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { LandingCta } from "@/components/landing-cta";
 import { buttonVariants } from "@/components/ui/button";
+import { getAllLogs, getProject, getUser } from "@/lib/content";
 import { pageMetadata } from "@/lib/metadata";
+import { cn } from "cn";
 
 export const metadata: Metadata = pageMetadata({
   title: "Project 30 — 30 minutes. 30 days. One area.",
   description:
     "A 30-day accountability system. Choose one area, work on it for 30 minutes every day for 30 days, and record what you did, what you learned, and what you will do next.",
   url: "/",
-  image: "/opengraph-image",
+  image: "/og/home.png",
 });
 
 const STEPS = [
@@ -39,14 +41,16 @@ const STEPS = [
   },
 ];
 
-const MOCK_DAYS: ("done" | "partial" | "missed" | "none")[] = [
-  "done", "done", "done", "done", "done", "missed", "done", "partial",
-  "done", "done", "none", "none", "none", "none", "none", "none",
-  "none", "none", "none", "none", "none", "none", "none", "none",
-  "none", "none", "none", "none", "none", "none",
-];
-
 export default function Home() {
+  const user = getUser();
+  const project = getProject();
+  const logs = getAllLogs();
+
+  const grid = Array.from({ length: 30 }, (_, i) => {
+    const log = logs.find((l) => l.day === i + 1);
+    return log?.status ?? "none";
+  });
+
   return (
     <div className="flex flex-col">
       <section className="flex flex-col items-center pt-20 pb-16 text-center sm:pt-28 sm:pb-20">
@@ -67,32 +71,42 @@ export default function Home() {
         <div className="mt-10">
           <LandingCta />
         </div>
+        {user.username && (
+          <p className="mt-6 max-w-md text-sm leading-6 text-muted-foreground">
+            {user.display_name} is building on{" "}
+            <span className="font-medium text-foreground">{project.area}</span>{" "}
+            — {project.goal}.
+          </p>
+        )}
       </section>
 
       <section className="flex justify-center pb-20">
         <div className="w-full max-w-xl">
           <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
             <span>Your 30 days will look like this</span>
-            <span>day 9 / 30</span>
+            <span>{logs.length} logged so far</span>
           </div>
           <div className="grid grid-cols-15 grid-rows-2 gap-1.5">
-            {MOCK_DAYS.map((s, i) => (
+            {grid.map((s, i) => (
               <span
                 key={i}
                 className="flex aspect-square items-center justify-center rounded-md border border-border bg-background text-[10px] sm:text-xs"
               >
                 <span
-                  className={
-                    s === "done"
-                      ? "text-primary"
-                      : s === "partial"
-                        ? "text-primary/50"
-                        : s === "missed"
-                          ? "text-muted-foreground/50"
-                          : "text-muted-foreground/30"
-                  }
+                  className={cn(
+                    s === "completed" && "text-primary",
+                    s === "partial" && "text-primary/50",
+                    s === "missed" && "text-muted-foreground/50",
+                    s === "none" && "text-muted-foreground/30"
+                  )}
                 >
-                  {s === "done" ? "✓" : s === "partial" ? "◐" : s === "missed" ? "—" : "·"}
+                  {s === "completed"
+                    ? "✓"
+                    : s === "partial"
+                      ? "◐"
+                      : s === "missed"
+                        ? "—"
+                        : "·"}
                 </span>
               </span>
             ))}
@@ -128,10 +142,10 @@ export default function Home() {
               on daily, made visible.
             </p>
             <a
-              href="/onboarding"
-              className={`${buttonVariants({ size: "sm" })} w-fit`}
+              href={user.username ? `/u/${user.username}` : "/journey"}
+              className={cn(buttonVariants({ size: "sm" }), "w-fit")}
             >
-              Start today
+              View the journey
             </a>
           </div>
         </div>
