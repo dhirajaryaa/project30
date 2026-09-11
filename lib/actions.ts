@@ -234,8 +234,7 @@ export async function setAvatar(avatar_url: string): Promise<Result> {
   const db = await getAuthDb();
   const result = await db
     .collection("user")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .updateOne({ _id: authId } as any, { $set: { avatar_url: url } });
+    .updateOne({ _id: new ObjectId(authId) }, { $set: { avatar_url: url } });
   if (!result.matchedCount) return { ok: false, error: "No account." };
 
   const data = await getProfileData(authId);
