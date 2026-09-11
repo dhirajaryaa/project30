@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/app-provider";
+import { Loader } from "@/components/loader";
 import { Timeline } from "@/components/timeline";
 import { buttonVariants } from "@/components/ui/button";
 import { countByStatus, sortLogs } from "@/lib/storage";
@@ -17,6 +18,7 @@ export default function JourneyPage() {
     if (status === "unauthenticated") router.replace("/sign-in");
   }, [status, router]);
 
+  if (status === "loading") return <Loader />;
   if (status !== "ready" || !project || !user) return null;
 
   const counts = countByStatus(logs);

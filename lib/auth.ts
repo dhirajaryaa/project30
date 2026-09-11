@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { nextCookies } from "better-auth/next-js";
 import { getAuthDb } from "@/lib/db";
 
 const baseURL =
@@ -27,6 +28,7 @@ export const auth = betterAuth({
         },
       }
     : undefined,
+  plugins: [nextCookies()],
   advanced: {
     cookiePrefix: "project30",
   },

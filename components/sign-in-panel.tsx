@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,13 +39,19 @@ function GoogleMark() {
 function Panel() {
   const params = useSearchParams();
   const error = params.get("error");
+  const [signingIn, setSigningIn] = useState(false);
 
   async function signInWithGoogle() {
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/dashboard",
-      errorCallbackURL: "/sign-in?error=1",
-    });
+    setSigningIn(true);
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+        errorCallbackURL: "/sign-in?error=1",
+      });
+    } catch {
+      setSigningIn(false);
+    }
   }
 
   return (
@@ -66,9 +73,14 @@ function Panel() {
             size="lg"
             className="w-full text-base"
             onClick={signInWithGoogle}
+            disabled={signingIn}
           >
-            <GoogleMark />
-            Continue with Google
+            {signingIn ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <GoogleMark />
+            )}
+            {signingIn ? "Redirecting to Google…" : "Continue with Google"}
           </Button>
           {error && (
             <p className="text-center text-sm text-destructive" role="alert">

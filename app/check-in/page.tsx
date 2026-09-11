@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/app-provider";
+import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,6 +66,7 @@ export default function CheckInPage() {
     if (status === "unauthenticated") router.replace("/sign-in");
   }, [status, router]);
 
+  if (status === "loading") return <Loader />;
   if (status !== "ready" || !project || !user) return null;
 
   const expectedDay = currentDayNumber(project.start_date);

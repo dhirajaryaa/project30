@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/app-provider";
+import { Loader } from "@/components/loader";
 import { StatusMark } from "@/components/status-mark";
 import { buttonVariants } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -18,7 +19,7 @@ export default function DashboardPage() {
     if (status === "unauthenticated") router.replace("/sign-in");
   }, [status, router]);
 
-  if (status === "loading") return null;
+  if (status === "loading") return <Loader />;
 
   if (status === "ready" && !project) {
     return (

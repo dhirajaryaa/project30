@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/app-provider";
+import { Loader } from "@/components/loader";
 import { ShareButtons } from "@/components/share-buttons";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ export default function SharePage({
     if (status === "unauthenticated") router.replace("/sign-in");
   }, [status, router]);
 
+  if (status === "loading") return <Loader />;
   if (status !== "ready" || !project || !user) return null;
 
   const log = getLog(day);
