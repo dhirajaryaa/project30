@@ -289,10 +289,13 @@ function parseFrontmatter(file) {
   return data;
 }
 
-const logs = readdirSync(join(root, "daily-log"))
-  .filter((f) => /^\d+\.md$/.test(f))
-  .map((f) => ({ day: Number.parseInt(f, 10), ...parseFrontmatter(f) }))
-  .sort((a, b) => a.day - b.day);
+const dailyLogDir = join(root, "daily-log");
+const logs = existsSync(dailyLogDir)
+  ? readdirSync(dailyLogDir)
+      .filter((f) => /^\d+\.md$/.test(f))
+      .map((f) => ({ day: Number.parseInt(f, 10), ...parseFrontmatter(f) }))
+      .sort((a, b) => a.day - b.day)
+  : [];
 
 function currentDay() {
   const start = new Date(project.start_date);
