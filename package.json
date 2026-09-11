@@ -7,7 +7,7 @@
     "build": "next build",
     "prebuild": "node scripts/generate-og.cjs",
     "predev": "node scripts/generate-og.cjs",
-    "start": "next start",
+    "start": "serve out",
     "lint": "eslint"
   },
   "dependencies": {
@@ -33,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "satori": "^0.33.4",
+    "serve": "^14",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

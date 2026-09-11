@@ -10,7 +10,9 @@ import { pageMetadata } from "@/lib/metadata";
 
 export async function generateStaticParams() {
   const logs = getAllLogs();
-  return logs.map((l) => ({ day: String(l.day) }));
+  return logs.length > 0
+    ? logs.map((l) => ({ day: String(l.day) }))
+    : [{ day: "1" }];
 }
 
 export async function generateMetadata({
@@ -25,9 +27,9 @@ export async function generateMetadata({
     title: log ? `Day ${n} / 30 — ${log.task}` : `Day ${n} / 30`,
     description: log
       ? `${statusLabel(log.status)} · ${log.task} on Project 30.`
-      : `Day ${n} of the 30-day Project 30 journey.`,
+      : `Day ${n} of the 30-day Project 30 journey. Start the challenge to log it.`,
     url: `/day/${day}`,
-    image: `/og/day/${encodeURIComponent(day)}.png`,
+    ...(log ? { image: `/og/day/${encodeURIComponent(String(n))}.png` } : {}),
   });
 }
 

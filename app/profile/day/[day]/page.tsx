@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ShareButtons } from "@/components/share-buttons";
 import { StatusMark } from "@/components/status-mark";
@@ -11,7 +10,10 @@ import { formatNice } from "@/lib/dates";
 import { getLogByDay } from "@/lib/storage";
 
 export function generateStaticParams() {
-  return getAllLogs().map((l) => ({ day: String(l.day) }));
+  const logs = getAllLogs();
+  return logs.length > 0
+    ? logs.map((l) => ({ day: String(l.day) }))
+    : [{ day: "1" }];
 }
 
 export async function generateMetadata({
@@ -56,7 +58,29 @@ export default async function ProfileDayPage({
 }) {
   const { day } = await params;
   const log = getLogByDay(getAllLogs(), Number(day));
-  if (!log) notFound();
+
+  if (!log) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
+        <Link
+          href="/profile"
+          className="text-xs font-semibold tracking-widest text-primary hover:underline"
+        >
+          PROJECT 30 · @{getUser().username}
+        </Link>
+        <p className="text-sm font-semibold tracking-widest text-primary">
+          DAY {day} / 30
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Nothing logged for day {day}
+        </h1>
+        <p className="max-w-md text-muted-foreground">
+          This day doesn&apos;t have an entry yet. The challenge hasn&apos;t
+          reached it.
+        </p>
+      </div>
+    );
+  }
 
   const user = getUser();
   const project = getProject();

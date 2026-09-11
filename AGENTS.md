@@ -155,6 +155,7 @@ AI must NOT auto-generate fake progress. It may help summarize reflections / sug
 ```bash
 pnpm dev        # run dev server
 pnpm build      # production static export (output: export)
+pnpm start      # preview the static export (serves out/ via serve)
 pnpm lint       # eslint
 pnpm exec tsc --noEmit   # typecheck
 ```
