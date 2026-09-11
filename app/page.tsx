@@ -65,7 +65,7 @@ export default function Home() {
           <br />
           <span className="text-primary">One area.</span>
         </h1>
-        <p className="mt-6 max-w-md text-lg text-muted-foreground">
+          <p className="mt-6 max-w-md text-lg text-muted-foreground sm:text-xl">
           Build the habit. Not the hype.
         </p>
         <div className="mt-10">

@@ -98,7 +98,7 @@ export default async function ProfileDayPage({
         <p className="mt-4 text-sm font-semibold tracking-widest text-primary">
           DAY {log.day} / 30
         </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
           {log.task}
         </h1>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">

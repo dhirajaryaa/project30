@@ -1,9 +1,9 @@
 {
   "user": {
-    "username": "dhirajarya",
+    "username": "dhirajaryaa",
     "display_name": "Dhiraj Arya",
     "avatar_url": "https://dhirajarya.in/assets/hero.webp",
-    "bio": "Self-taught full-stack developer. Building in public.",
+    "bio": "Self-taught engineer, builder, and learner.",
     "socials": {
       "github": "https://github.com/dhirajaryaa",
       "twitter": "https://twitter.com/dhirajarya01",
@@ -14,8 +14,8 @@
   },
   "project": {
     "area": "Full-Stack Development",
-    "goal": "Ship 3 real projects and document the journey publicly",
-    "start_date": "2026-09-11",
+    "goal": "Build and improve Blogdorp into a functional full-stack product",
+    "start_date": "2026-09-15",
     "status": "active"
   }
 }

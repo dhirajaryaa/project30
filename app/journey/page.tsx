@@ -27,7 +27,7 @@ export default function JourneyPage() {
         <p className="text-sm font-semibold tracking-widest text-primary">
           PROJECT 30
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
           {project.area}
         </h1>
         <p className="mt-1 text-muted-foreground">

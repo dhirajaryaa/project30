@@ -51,12 +51,14 @@ export default function ProfilePage() {
             >
               PROJECT 30
             </Link>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-              {user.display_name}
-              <span className="ml-2 text-base font-normal text-muted-foreground">
+            <div className="mt-1 tracking-tight flex flex-col sm:gap-3 sm:items-end justify-left sm:flex-row">
+              <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl w-fit h-full">
+                {user.display_name}
+              </h1>
+              <div className="text-base h-full font-normal text-muted-foreground w-fit">
                 @{user.username}
-              </span>
-            </h1>
+              </div>
+            </div>
             {user.bio && (
               <p className="mt-1 text-sm text-muted-foreground">{user.bio}</p>
             )}
@@ -65,10 +67,10 @@ export default function ProfilePage() {
       </header>
 
       <section className="mb-10 flex flex-col gap-2">
-        <h1 className="flex items-start gap-2 text-2xl leading-snug font-semibold tracking-tight sm:text-3xl">
+        <h2 className="flex items-start gap-2 text-2xl leading-snug font-semibold tracking-tight sm:text-3xl lg:text-4xl">
           <span aria-hidden>🚩</span>
           <span>{project.goal}</span>
-        </h1>
+        </h2>
         <p className="max-w-2xl text-sm text-muted-foreground">{project.area}</p>
       </section>
 
@@ -104,7 +106,7 @@ export default function ProfilePage() {
       </div>
 
       <section className="mb-12">
-        <h2 className="mb-4 font-medium">The journey</h2>
+        <h2 className="mb-4 text-lg font-medium sm:text-xl">The journey</h2>
         <Timeline logs={logs} dayHref={dayHref} />
         <p className="mt-3 text-xs text-muted-foreground">
           Started {formatNice(project.start_date)}.
@@ -112,7 +114,7 @@ export default function ProfilePage() {
       </section>
 
       <section>
-        <h2 className="mb-4 font-medium">Recent done — what was actually done</h2>
+        <h2 className="mb-4 text-lg font-medium sm:text-xl">Recent done — what was actually done</h2>
         {recent.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Nothing yet — day 1 hasn&apos;t been logged.
