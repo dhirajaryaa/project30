@@ -1,16 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { countByStatus, getLogByDay, sortLogs } from "./storage";
+import { sortLogs } from "./storage";
 export { getLogByDay } from "./storage";
-import type {
-  DailyLog,
-  LogStatus,
-  Project,
-  PublicDay,
-  PublicProfile,
-  SiteData,
-  User,
-} from "./types";
+import type { DailyLog, LogStatus, Project, SiteData, User } from "./types";
 
 const CONFIG_PATH = path.join(process.cwd(), "config", "config.json");
 const LOGS_DIR = path.join(process.cwd(), "daily-log");
@@ -113,28 +105,6 @@ function currentDayFromStart(startDate: string): number {
   return Math.min(Math.max(day, 0), 30);
 }
 
-export function getPublicProfile(username: string): PublicProfile | null {
-  const site = getSiteData();
-  if (site.user.username.toLowerCase() !== username.toLowerCase()) return null;
-  const { user, project, logs } = site;
-  const currentDay = currentDayFromStart(project.start_date);
-  const counts = countByStatus(logs);
-  const progress = Math.min(Math.round((counts.completed / 30) * 100), 100);
-  return {
-    user,
-    project,
-    logs,
-    currentDay,
-    counts,
-    progress,
-    todayLog: getLogByDay(logs, currentDay) ?? null,
-  };
-}
-
-export function getPublicDay(username: string, day: number): PublicDay | null {
-  const site = getSiteData();
-  if (site.user.username.toLowerCase() !== username.toLowerCase()) return null;
-  const log = getLogByDay(site.logs, day);
-  if (!log) return null;
-  return { user: site.user, project: site.project, log };
+export function getCurrentDay(): number {
+  return currentDayFromStart(getProject().start_date);
 }

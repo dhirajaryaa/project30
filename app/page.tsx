@@ -52,7 +52,7 @@ export default function Home() {
   });
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col px-4 sm:px-6">
       <section className="flex flex-col items-center pt-20 pb-16 text-center sm:pt-28 sm:pb-20">
         <p className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
           <span className="size-1.5 rounded-full bg-primary" />
@@ -142,10 +142,10 @@ export default function Home() {
               on daily, made visible.
             </p>
             <a
-              href={user.username ? `/u/${user.username}` : "/journey"}
+              href="/profile"
               className={cn(buttonVariants({ size: "sm" }), "w-fit")}
             >
-              View the journey
+              View my progress
             </a>
           </div>
         </div>

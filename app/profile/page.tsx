@@ -1,72 +1,42 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { ShareButtons } from "@/components/share-buttons";
 import { StatusMark } from "@/components/status-mark";
 import { Timeline } from "@/components/timeline";
 import { Progress } from "@/components/ui/progress";
 import { avatarUrl } from "@/lib/avatar";
-import { getPublicProfile } from "@/lib/content";
+import {
+  getAllLogs,
+  getCurrentDay,
+  getProject,
+  getUser,
+} from "@/lib/content";
 import { formatNice } from "@/lib/dates";
-import { absoluteUrl } from "@/lib/site";
-import { sortLogs } from "@/lib/storage";
+import { pageMetadata } from "@/lib/metadata";
+import { countByStatus, sortLogs } from "@/lib/storage";
 
-export async function generateStaticParams() {
-  const { getUser } = await import("@/lib/content");
-  return [{ username: getUser().username }];
-}
+export const metadata: Metadata = pageMetadata({
+  title: "Dhiraj Arya — Project 30",
+  description:
+    "Full-Stack Development — Ship 3 real projects and document the journey publicly. Day X/30.",
+  url: "/profile",
+  image: "/og/profile.png",
+});
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}): Promise<Metadata> {
-  const { username } = await params;
-  const profile = getPublicProfile(username);
-  if (!profile) return { title: "Not found", robots: { index: false } };
-  const title = `${profile.user.display_name} (@${profile.user.username}) — Project 30`;
-  const description = `${profile.project.goal} · ${profile.project.area} · Day ${profile.currentDay}/30 · ${profile.counts.completed} days completed.`;
-  const url = `/u/${profile.user.username}`;
-  return {
-    title,
-    description,
-    alternates: { canonical: url },
-    openGraph: {
-      title,
-      description,
-      url,
-      type: "profile",
-      siteName: "Project 30",
-      username: profile.user.username,
-      images: [{ url: `/og/u/${profile.user.username}.png`, width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [`/og/u/${profile.user.username}.png`],
-    },
-  };
-}
-
-export default async function PublicProfilePage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
-  const { username } = await params;
-  const profile = getPublicProfile(username);
-  if (!profile) notFound();
-
-  const { user, project, logs, currentDay, counts, progress } = profile;
+export default function ProfilePage() {
+  const user = getUser();
+  const project = getProject();
+  const logs = getAllLogs();
+  const currentDay = getCurrentDay();
+  const counts = countByStatus(logs);
+  const progress = Math.min(Math.round((counts.completed / 30) * 100), 100);
   const recent = sortLogs(logs).slice(-4).reverse();
-  const dayHref = (day: number) => `/u/${user.username}/day/${day}`;
-  const profileUrl = `/u/${user.username}`;
-  const shareUrl = absoluteUrl(profileUrl);
+  const dayHref = (day: number) => `/profile/day/${day}`;
+  const profileUrl = "/profile";
 
   return (
-    <div className="mx-auto max-w-3xl pt-10 sm:pt-16">
+    <div className="mx-auto max-w-3xl px-4 pt-10 sm:px-6 sm:pt-16">
       <header className="mb-10">
         <div className="flex items-center gap-5">
           <Avatar
@@ -177,7 +147,7 @@ export default async function PublicProfilePage({
       <section className="mt-12 border-t border-border pt-8">
         <p className="mb-3 text-sm font-medium">Share this profile</p>
         <ShareButtons
-          url={shareUrl}
+          url={profileUrl}
           title={`${user.display_name} — Day ${currentDay}/30 on Project 30`}
           text={`${user.display_name} is on day ${currentDay}/30: ${project.goal} · ${project.area} · @${user.username}`}
         />

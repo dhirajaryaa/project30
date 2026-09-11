@@ -46,7 +46,7 @@ This is a **fully static Next.js site** (`output: "export"`). It is a single-per
   "user": {
     "username": "dhirajarya",
     "display_name": "Dhiraj Arya",
-    "avatar_url": "https://api.dicebear.com/...",
+    "avatar_url": "https://dhirajarya.in/assets/hero.webp",
     "bio": "Self-taught full-stack developer. Building in public.",
     "socials": {
       "github": "https://github.com/dhirajaryaa",
@@ -97,12 +97,11 @@ evidence_url: ""
 
 - **`/`** — Landing. Hero, 5-step system, live day grid pulled from `daily-log/`.
 - **`/journey`** — Timeline of all 30 days (✓ completed, ◐ partial, — missed, ○ not yet) + entries list.
-- **`/day/[day]`** — Journal entry page (readable, share CTA). Static params from `daily-log/`.
-- **`/share/[day]`** — Beautiful shareable progress card (screenshot/social preview).
-- **`/u/[username]`** — Public profile: avatar, display name, 🚩 goal, area, day X/30, progress bar, completed/partial/missed counts, 30-day timeline, recent entries, share buttons.
-- **`/u/[username]/day/[day]`** — Public single-day entry.
+- **`/day/[day]`** — Journal entry page (readable, share buttons). Static params from `daily-log/`.
+- **`/profile`** — Single-person profile (reads `config/config.json` directly): avatar, display name, 🚩 goal, area, day X/30, progress bar, completed/partial/missed counts, 30-day timeline, recent entries, share buttons.
+- **`/profile/day/[day]`** — Public single-day entry (the share URL for a specific day).
 
-Social sharing is **the public URL + OG image**. No per-network integrations.
+Social sharing is **the public URL + OG image**, shared directly from `/day/[day]` (copy link, native share, X/LinkedIn buttons). No separate share page, no per-network integrations. If someone wants to run the same challenge, they clone this repo and deploy it themselves.
 
 ---
 
@@ -111,7 +110,7 @@ Social sharing is **the public URL + OG image**. No per-network integrations.
 - **Next.js (App Router, `output: "export"`)**, **TypeScript**, **Tailwind CSS v4**, **shadcn/ui** (custom theme in `app/globals.css`, warm neutral + terracotta accent `#e08a5c`).
 - **Vercel deployment** (`pnpm build` → static export).
 - **react-markdown + remark-gfm** for rendering journal prose.
-- All content getters live in `lib/content.ts` (sync, build-time fs reads) and `lib/storage.ts` (pure helpers: sort, count, lookup). `lib/dates.ts` handles day math (`currentDayNumber` clamps to 0–30; pre-start projects show 0).
+- All content getters live in `lib/content.ts` (sync, build-time fs reads) and `lib/storage.ts` (pure helpers: sort, count, lookup). `getCurrentDay()` in `lib/content.ts` handles day math (clamps to 0–30; pre-start projects show 0).
 - Site URL from `SITE_PUBLIC_URL` in `lib/site.ts` (drives `metadataBase` and share links).
 - Code style: **no comments** unless asked. Keep it minimal.
 - **Package manager: pnpm.**
@@ -124,7 +123,7 @@ Social sharing is **the public URL + OG image**. No per-network integrations.
 - Progress must be **visible** (large day number, clean progress bar).
 - Generous whitespace, strong typographic hierarchy, low-fidelity color (terracotta primary as the accent; everything else quiet).
 - Every public page must render well as a screenshot. Mobile responsive.
-- **OG images matter** — every key page gets a clean 1200×630 Open Graph PNG, generated **at build time** by `scripts/generate-og.cjs` (satori + @resvg/resvg-js) into `public/og/`. The `prebuild`/`predev` npm hooks run it automatically. Metadata on each page points to these static PNGs (`og:image` + `twitter:card`), so Twitter, LinkedIn, Facebook, and WhatsApp all render the preview. Do not replace this with Next `opengraph-image` route handlers — they are unreliable with `output: "export"` in Next 16.
+- **OG images matter** — every key page gets a clean 1200×630 Open Graph PNG, generated **at build time** by `scripts/generate-og.cjs` (satori + @resvg/resvg-js) into `public/og/`. The `prebuild`/`predev` npm hooks run it automatically. The script wipes `public/og/` first, and the folder is gitignored (never commit build artifacts). Metadata on each page points to these static PNGs (`og:image` + `twitter:card`), so Twitter, LinkedIn, Facebook, and WhatsApp all render the preview. Do not replace this with Next `opengraph-image` route handlers — they are unreliable with `output: "export"` in Next 16.
 
 **Status vocabulary (always):** Completed ✓, Missed —, Partial ◐, Not completed yet ○. Always call it **"Missed"**, never "Absent".
 
@@ -140,10 +139,10 @@ AI must NOT auto-generate fake progress. It may help summarize reflections / sug
 
 1. Open the app
 2. See the landing page
-3. See the public profile (`/u/[username]`)
+3. See the public profile (`/profile`)
 4. Browse the 30-day timeline (`/journey`)
-5. Open any logged day (`/day/N`, `/u/[username]/day/N`)
-6. Generate/share a day (`/share/N`, copy link, native share)
+5. Open any logged day (`/day/N`, `/profile/day/N`)
+6. Share a day (copy link, native share, X/LinkedIn buttons on `/day/N`)
 7. Social previews (OG images) render correctly
 8. `pnpm build` produces a static export; push to Vercel to deploy
 

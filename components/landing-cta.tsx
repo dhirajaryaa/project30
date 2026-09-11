@@ -8,15 +8,15 @@ export function LandingCta() {
   const hasProject = Boolean(user.username);
 
   return (
-    <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+    <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-center">
       <Link
-        href={hasProject ? `/u/${user.username}` : "/journey"}
+        href="/profile"
         className={cn(buttonVariants({ size: "lg" }), "px-6 text-base")}
       >
-        {hasProject ? "View public progress" : "Start Project 30"}
+        {hasProject ? "View my progress" : "Start Project 30"}
       </Link>
       <Link
-        href={hasProject ? "/journey" : "#how-it-works"}
+        href="/journey"
         className={cn(
           buttonVariants({ variant: "outline", size: "lg" }),
           "px-6 text-base"

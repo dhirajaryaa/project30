@@ -3,13 +3,10 @@ import Link from "next/link";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ShareButtons } from "@/components/share-buttons";
 import { StatusMark } from "@/components/status-mark";
-import { buttonVariants } from "@/components/ui/button";
 import { activityTypeLabel } from "@/lib/constants";
 import { getAllLogs, getLogByDay, getProject, getUser } from "@/lib/content";
 import { formatNice } from "@/lib/dates";
 import { pageMetadata } from "@/lib/metadata";
-import { absoluteUrl } from "@/lib/site";
-import { cn } from "cn";
 
 export async function generateStaticParams() {
   const logs = getAllLogs();
@@ -47,7 +44,7 @@ export default async function DayPage({
 
   if (!log) {
     return (
-      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 text-center">
+      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
         <p className="text-sm font-semibold tracking-widest text-primary">
           DAY {day} / 30
         </p>
@@ -61,10 +58,8 @@ export default async function DayPage({
     );
   }
 
-  const shareUrl = absoluteUrl(`/u/${user.username}/day/${log.day}`);
-
   return (
-    <article className="mx-auto max-w-2xl pt-10 sm:pt-16">
+    <article className="mx-auto max-w-2xl px-4 pt-10 sm:px-6 sm:pt-16">
       <header className="mb-10 border-b border-border pb-8">
         <p className="text-sm font-semibold tracking-widest text-primary">
           DAY {log.day} / 30
@@ -86,28 +81,17 @@ export default async function DayPage({
       <MarkdownRenderer body={log.body} />
 
       <footer className="mt-14 flex flex-col gap-6 border-t border-border pt-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href={`/share/${log.day}`}
-            className={buttonVariants()}
-          >
-            Share this day
-          </Link>
-          <Link
-            href="/journey"
-            className={cn(
-              buttonVariants({ variant: "ghost" }),
-              "text-muted-foreground"
-            )}
-          >
-            Back to journey
-          </Link>
-        </div>
         <ShareButtons
-          url={shareUrl}
+          url={`/profile/day/${log.day}`}
           title={`Day ${log.day} / 30 — ${log.task}`}
           text={`Day ${log.day} / 30 • ${statusLabel(log.status)} • ${log.task} • ${project.area} • @${user.username} on Project 30`}
         />
+        <Link
+          href="/journey"
+          className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          ← Back to journey
+        </Link>
       </footer>
     </article>
   );

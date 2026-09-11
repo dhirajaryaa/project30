@@ -1,15 +1,23 @@
-const { readFileSync, readdirSync, mkdirSync, writeFileSync } = require("node:fs");
+const { readFileSync, existsSync, readdirSync, mkdirSync, rmSync, writeFileSync } = require("node:fs");
 const { join, dirname } = require("node:path");
 const { default: satori } = require("satori");
 const { Resvg } = require("@resvg/resvg-js");
 const { createElement: h } = require("react");
 
 const root = join(__dirname, "..");
+const ogRoot = join(root, "public", "og");
 const config = JSON.parse(
   readFileSync(join(root, "config", "config.json"), "utf8")
 );
 const user = config.user;
 const project = config.project;
+
+function cleanOg() {
+  if (!existsSync(ogRoot)) return;
+  for (const entry of readdirSync(ogRoot)) {
+    rmSync(join(ogRoot, entry), { recursive: true, force: true });
+  }
+}
 
 function loadFont(weight) {
   const file = join(
@@ -299,18 +307,19 @@ async function write(element, relPath) {
     fitTo: { mode: "width", value: 1200 },
   });
   const png = resvg.render().asPng();
-  const abs = join(root, "public", "og", relPath);
+  const abs = join(ogRoot, relPath);
   mkdirSync(dirname(abs), { recursive: true });
   writeFileSync(abs, png);
   console.log("og:", `/og/${relPath}`);
 }
 
 (async () => {
+  cleanOg();
   await write(renderLanding(), "home.png");
   await write(renderJourney(), "journey.png");
-  await write(renderProfile(currentDay()), `u/${user.username}.png`);
+  await write(renderProfile(currentDay()), "profile.png");
   for (const l of logs) {
     await write(renderDay(l), `day/${l.day}.png`);
-    await write(renderDay(l), `u/${user.username}/day/${l.day}.png`);
+    await write(renderDay(l), `profile/day/${l.day}.png`);
   }
 })();

@@ -41,10 +41,9 @@ daily-log/02.md        # day 2 entry
 
 - **`/`** — Landing page with live 30-day grid.
 - **`/journey`** — The full 30-day timeline: ✓ completed · ◐ partial · — missed · ○ not yet.
-- **`/day/N`** — Journal entry page (rendered markdown).
-- **`/share/N`** — Shareable daily progress card (copy link, native Web Share, X/LinkedIn).
-- **`/u/{username}`** — Public profile: 🚩 goal, area, day X/30, progress bar, counts, timeline, recent entries, share buttons.
-- **`/u/{username}/day/N`** — Public single-day entry.
+- **`/day/N`** — Journal entry page (rendered markdown, share buttons).
+- **`/profile`** — Single-person profile: 🚩 goal, area, day X/30, progress bar, counts, timeline, recent entries, share buttons.
+- **`/profile/day/N`** — Public single-day entry (the share URL for a day).
 
 Every page generates a clean **Open Graph image** at build time for social previews.
 

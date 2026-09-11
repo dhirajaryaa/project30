@@ -6,31 +6,28 @@ import { ShareButtons } from "@/components/share-buttons";
 import { StatusMark } from "@/components/status-mark";
 import { buttonVariants } from "@/components/ui/button";
 import { activityTypeLabel } from "@/lib/constants";
-import { getAllLogs, getPublicDay } from "@/lib/content";
+import { getAllLogs, getProject, getUser } from "@/lib/content";
 import { formatNice } from "@/lib/dates";
+import { getLogByDay } from "@/lib/storage";
 
-export async function generateStaticParams() {
-  const { getUser } = await import("@/lib/content");
-  const logs = getAllLogs();
-  return logs.map((l) => ({
-    username: getUser().username,
-    day: String(l.day),
-  }));
+export function generateStaticParams() {
+  return getAllLogs().map((l) => ({ day: String(l.day) }));
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ username: string; day: string }>;
+  params: Promise<{ day: string }>;
 }): Promise<Metadata> {
-  const { username, day } = await params;
-  const entry = getPublicDay(username, Number(day));
-  if (!entry) return { title: "Not found", robots: { index: false } };
+  const { day } = await params;
+  const log = getLogByDay(getAllLogs(), Number(day));
+  if (!log) return { title: "Not found", robots: { index: false } };
 
-  const { user, project, log } = entry;
+  const user = getUser();
+  const project = getProject();
   const title = `${user.display_name} — Day ${log.day}/30: ${log.task}`;
   const description = `${statusLabel(log.status)} · ${log.task} · ${project.area} on Project 30.`;
-  const url = `/u/${user.username}/day/${log.day}`;
+  const url = `/profile/day/${log.day}`;
   return {
     title,
     description,
@@ -41,34 +38,35 @@ export async function generateMetadata({
       url,
       type: "article",
       siteName: "Project 30",
-      images: [{ url: `/og/u/${user.username}/day/${log.day}.png`, width: 1200, height: 630 }],
+      images: [{ url: `/og/profile/day/${log.day}.png`, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`/og/u/${user.username}/day/${log.day}.png`],
+      images: [`/og/profile/day/${log.day}.png`],
     },
   };
 }
 
-export default async function PublicDayPage({
+export default async function ProfileDayPage({
   params,
 }: {
-  params: Promise<{ username: string; day: string }>;
+  params: Promise<{ day: string }>;
 }) {
-  const { username, day } = await params;
-  const entry = getPublicDay(username, Number(day));
-  if (!entry) notFound();
+  const { day } = await params;
+  const log = getLogByDay(getAllLogs(), Number(day));
+  if (!log) notFound();
 
-  const { user, project, log } = entry;
-  const url = `/u/${user.username}/day/${log.day}`;
+  const user = getUser();
+  const project = getProject();
+  const url = `/profile/day/${log.day}`;
 
   return (
-    <article className="mx-auto max-w-2xl pt-10 sm:pt-16">
+    <article className="mx-auto max-w-2xl px-4 pt-10 sm:px-6 sm:pt-16">
       <header className="mb-10 border-b border-border pb-8">
         <Link
-          href={`/u/${user.username}`}
+          href="/profile"
           className="text-xs font-semibold tracking-widest text-primary hover:underline"
         >
           PROJECT 30 · @{user.username}
@@ -95,7 +93,7 @@ export default async function PublicDayPage({
         <p className="text-sm text-muted-foreground">
           {user.display_name} is working on{" "}
           <Link
-            href={`/u/${user.username}`}
+            href="/profile"
             className="text-foreground underline underline-offset-4"
           >
             {project.area} — {project.goal}
@@ -109,7 +107,7 @@ export default async function PublicDayPage({
         />
         <div className="flex flex-wrap gap-3">
           <Link
-            href={`/u/${user.username}`}
+            href="/profile"
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             View full journey

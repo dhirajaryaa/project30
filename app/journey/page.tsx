@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { StatusMark } from "@/components/status-mark";
 import { Timeline } from "@/components/timeline";
-import { getAllLogs, getProject, getUser } from "@/lib/content";
+import { getAllLogs, getProject } from "@/lib/content";
 import { pageMetadata } from "@/lib/metadata";
 import { countByStatus, sortLogs } from "@/lib/storage";
 
@@ -15,7 +15,6 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function JourneyPage() {
-  const user = getUser();
   const project = getProject();
   const logs = getAllLogs();
 
@@ -23,7 +22,7 @@ export default function JourneyPage() {
   const filled = sortLogs(logs);
 
   return (
-    <div className="mx-auto max-w-3xl pt-10 sm:pt-16">
+    <div className="mx-auto max-w-3xl px-4 pt-10 sm:px-6 sm:pt-16">
       <header className="mb-10">
         <p className="text-sm font-semibold tracking-widest text-primary">
           PROJECT 30
@@ -77,16 +76,14 @@ export default function JourneyPage() {
         )}
       </div>
 
-      {user.username && (
-        <div className="mt-12">
-          <Link
-            href={`/u/${user.username}`}
-            className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
-            View public profile
-          </Link>
-        </div>
-      )}
+      <div className="mt-12">
+        <Link
+          href="/profile"
+          className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+        >
+          View my profile
+        </Link>
+      </div>
     </div>
   );
 }

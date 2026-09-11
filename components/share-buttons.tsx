@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ArrowUpRight, Check, Copy, Globe, Share2 } from "lucide-react";
-import { SITE_URL } from "@/lib/site";
+import { absoluteUrl } from "@/lib/site";
 
 type Props = {
   url: string;
@@ -13,22 +13,18 @@ type Props = {
 };
 
 export function ShareButtons({ url, title, text }: Props) {
+  const hasShare = React.useSyncExternalStore(
+    () => () => {},
+    () => "share" in navigator,
+    () => false
+  );
   const [copied, setCopied] = React.useState(false);
 
-  // The configured site URL wins (matches the OG/cards domain from env);
-  // fall back to the origin the visitor is actually on.
-  const absoluteUrl = React.useMemo(() => {
-    if (url.startsWith("http")) return url;
-    if (typeof window === "undefined") return url;
-    if (SITE_URL.includes("localhost") && typeof process.env.NEXT_PUBLIC_SITE_URL === "undefined") {
-      return `${window.location.origin}${url}`;
-    }
-    return `${SITE_URL}${url}`;
-  }, [url]);
+  const shareUrl = absoluteUrl(url);
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(absoluteUrl);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -39,13 +35,13 @@ export function ShareButtons({ url, title, text }: Props) {
   const webShare = async () => {
     if (!navigator.share) return;
     try {
-      await navigator.share({ url: absoluteUrl, title, text });
+      await navigator.share({ url: shareUrl, title, text });
     } catch {
       /* user cancelled */
     }
   };
 
-  const encodedUrl = encodeURIComponent(absoluteUrl);
+  const encodedUrl = encodeURIComponent(shareUrl);
   const encodedText = encodeURIComponent(text ?? title ?? "Project 30");
 
   return (
@@ -58,12 +54,12 @@ export function ShareButtons({ url, title, text }: Props) {
         )}
         {copied ? "Copied" : "Copy link"}
       </Button>
-      {"share" in navigator && (
-        <Button variant="secondary" onClick={webShare}>
-          <Share2 />
-          Share
-        </Button>
-      )}
+{hasShare && (
+          <Button variant="secondary" onClick={webShare}>
+            <Share2 />
+            Share
+          </Button>
+        )}
       <Link
         className={buttonVariants({ variant: "outline" })}
         href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`}

@@ -52,19 +52,3 @@ export type SiteData = {
   project: Project;
   logs: DailyLog[];
 };
-
-export type PublicProfile = {
-  user: User;
-  project: Project;
-  logs: DailyLog[];
-  currentDay: number;
-  counts: { completed: number; partial: number; missed: number };
-  progress: number;
-  todayLog: DailyLog | null;
-};
-
-export type PublicDay = {
-  user: User;
-  project: Project;
-  log: DailyLog;
-};
