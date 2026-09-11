@@ -24,7 +24,7 @@ export default function DayPage({
   const router = useRouter();
 
   React.useEffect(() => {
-    if (status === "unauthenticated") router.replace("/onboarding");
+    if (status === "unauthenticated") router.replace("/sign-in");
   }, [status, router]);
 
   if (status !== "ready" || !project || !user) return null;

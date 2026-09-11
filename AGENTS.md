@@ -163,10 +163,11 @@ Do NOT add: followers, likes, comments, leaderboards, karma, points, badges, str
 
 ## 6. Tech Stack & Decisions
 
-- **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**, **shadcn/ui** (custom theme already in `app/globals.css`, warm neutral + orange accent).
+- **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**, **shadcn/ui** (custom theme already in `app/globals.css`, warm neutral + terracotta accent `#e08a5c`).
 - **Vercel deployment**.
-- MVP data layer: **localStorage-based store** with a React Context provider (single-user, no external DB needed for the MVP). The store layer should be abstracted (`lib/storage.ts`) so a real SQL database (Vercel Postgres / SQLite / Turso) can replace it later without rewriting pages. Date handling: use **UTC/local day boundaries** consistently (compute "today" in the client).
-- **Auth:** keep simple for the MVP (single user, stored locally). No OAuth unless later required.
+- Data layer: **MongoDB (Atlas) via Mongoose**. Queries are centralized in `lib/queries.ts`; every mutation goes through server actions in `lib/actions.ts` and is abstracted so a different DB can be swapped later without rewriting pages. The storage layer abstraction (`lib/storage.ts`) exists only as read-side utilities (date math, sorting) — not a data source. Date handling uses **UTC/local day boundaries** consistently (compute "today" in the client).
+- **Auth:** **better-auth** with **Google social sign-in** (`lib/auth.ts`, `lib/auth-client.ts`). Protected routes are enforced twice: `proxy.ts` (redirects unauthenticated requests to `/sign-in`) and inside every server action (`requireAuthId()` runs the session check **before any database access**). Ownership is enforced on every read/write (all queries scoped by `auth_id` → profile → project). Public pages (`/u/[username]`, `/u/[username]/day/[day]`, share/OG images) stay public; the public DTO strips private fields (`what_was_difficult`, `missed_reason`).
+- **Security rule:** never trust the client — verify the session server-side before any DB read or write, and never leak data belonging to a session other than the caller.
 - **Package manager: pnpm.** Use `pnpm dlx shadcn add ...` for shadcn components.
 - Do NOT implement GitHub sync, screen-time verification, proof-of-work, AI generation, follower/like systems, teams, or public community in this version.
 

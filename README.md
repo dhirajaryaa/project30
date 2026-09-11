@@ -39,20 +39,27 @@ Choose one area  →  Set 30-day goal  →  Today's task
 | Framework  | Next.js 16 (App Router) |
 | Language   | TypeScript |
 | Styling    | Tailwind CSS v4 |
-| UI         | shadcn/ui (custom warm-neutral + orange theme in `app/globals.css`) |
-| Data       | localStorage-backed React Context (MVP, single-user) |
+| UI         | shadcn/ui (custom warm-neutral + terracotta theme in `app/globals.css`) |
+| Data       | MongoDB Atlas via Mongoose; all writes through server actions |
+| Auth       | better-auth with Google social sign-in; `proxy.ts` protects `/dashboard`, `/check-in`, `/journey`, `/day/*`, `/share/*`, `/onboarding` |
 | Deploy     | Vercel |
 
-The storage layer is abstracted in `lib/storage.ts` so a real SQL database (Vercel Postgres / SQLite / Turso) can replace it later **without rewriting pages**.
-
----
+Storage is abstracted behind `lib/queries.ts` + server actions in `lib/actions.ts`, so it can be swapped (e.g. Postgres/SQLite) later **without rewriting pages**. Every server action authenticates the session **before touching the database**, and reads/writes are scoped to the signed-in user's own profile/project. The public layer (`/u/{username}`, `/u/{username}/day/[day]`, OG images) deliberately exposes only what the user wrote, and strips private fields (`what_was_difficult`, `missed_reason`) unless the owner is signed in.
 
 ## Getting started
 
 ```bash
+cp .env.example .env.local   # then fill in the values
 pnpm install
 pnpm dev
 ```
+
+Environment variables:
+
+- `MONGODB_URI` — MongoDB connection string.
+- `AUTH_SECRET` — secret for better-auth (run `openssl rand -base64 32`).
+- `AUTH_URL` / `NEXT_PUBLIC_SITE_URL` — the app base URL.
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth app credentials (sign-in via https://console.cloud.google.com → APIs & Services → Credentials → OAuth 2.0 Client IDs → Web application; add `{AUTH_URL}/api/auth/callback/google` and `{AUTH_URL}/api/auth/error` to redirect URIs).
 
 Open [http://localhost:3000](http://localhost:3000).
 
@@ -75,6 +82,7 @@ pnpm dlx shadcn add <component>   # add a shadcn component
 ```
 app/            # App Router pages & layouts
   page.tsx          # Landing page
+  sign-in/          # Sign in (Google)
   onboarding/       # Project creation flow
   dashboard/        # Dashboard
   check-in/         # Daily check-in
@@ -82,17 +90,19 @@ app/            # App Router pages & layouts
   day/[day]/        # Daily entry page
   u/[username]/     # Public profile
   share/[day]/      # Shareable progress card
+  api/auth/[all]/   # better-auth handler
 components/     # Reusable components (ui/ + product components)
-lib/            # Types, storage abstraction, store/provider, utils
+lib/            # Types, DB models, queries, server actions, utils
+proxy.ts        # Route protection (Next.js proxy/middleware)
 ```
 
 ---
 
 ## Data model
 
-- **User** — id, username, display_name, avatar_url, created_at
+- **User** — id, username, display_name, avatar_url, auth_id (better-auth), created_at
 - **Project** — id, user_id, area, goal, start_date, status, created_at
-- **DailyLog** — id, project_id, day_number (1–30), date, task, status, activity_type, what_i_did, what_i_learned, what_was_difficult, tomorrow_plan, missed_reason, created_at, updated_at — unique per `(project_id, day_number)`
+- **DailyLog** — id, project_id, day_number (1–30), date, task, status, activity_type, what_i_did, what_i_learned, what_was_difficult, tomorrow_plan, missed_reason, evidence_url, created_at, updated_at — unique per `(project_id, day_number)`
 
 ---
 

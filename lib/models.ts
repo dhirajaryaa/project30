@@ -7,6 +7,12 @@ import type {
 
 const userSchema = new Schema(
   {
+    auth_id: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
     username: {
       type: String,
       required: true,
@@ -17,7 +23,6 @@ const userSchema = new Schema(
     },
     display_name: { type: String, required: true },
     avatar_url: String,
-    auth_token: { type: String, required: true, index: true },
   },
   { timestamps: true }
 );
@@ -116,4 +121,16 @@ export function toLogDto(doc: Doc): DailyLogDTO {
     created_at: String(doc.createdAt ?? doc.created_at ?? new Date().toISOString()),
     updated_at: String(doc.updatedAt ?? doc.updated_at ?? new Date().toISOString()),
   };
+}
+
+const PRIVATE_FIELDS = ["what_was_difficult", "missed_reason"] as const;
+
+export function toPublicLogDto(doc: Doc): DailyLogDTO {
+  const dto = toLogDto(doc);
+  for (const field of PRIVATE_FIELDS) {
+    if (dto[field] !== undefined) {
+      delete dto[field];
+    }
+  }
+  return dto;
 }

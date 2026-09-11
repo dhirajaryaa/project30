@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AvatarEditor } from "@/components/avatar";
 import { ShareButtons } from "@/components/share-buttons";
 import { StatusMark } from "@/components/status-mark";
 import { Timeline } from "@/components/timeline";
 import { Progress } from "@/components/ui/progress";
 import { buttonVariants } from "@/components/ui/button";
+import { avatarUrl } from "@/lib/avatar";
 import { formatNice } from "@/lib/dates";
 import { getPublicProfile } from "@/lib/queries";
 import { sortLogs } from "@/lib/storage";
@@ -64,18 +66,12 @@ export default async function PublicProfilePage({
     <div className="mx-auto max-w-3xl pt-10 sm:pt-16">
       <header className="mb-10">
         <div className="flex items-center gap-5">
-          {user.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.avatar_url}
-              alt={user.display_name}
-              className="size-16 rounded-full object-cover ring-1 ring-border"
-            />
-          ) : (
-            <span className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-xl font-semibold text-primary">
-              {user.display_name.slice(0, 1).toUpperCase()}
-            </span>
-          )}
+          <AvatarEditor
+            ownerId={user.id}
+            username={user.username}
+            avatarUrl={user.avatar_url ?? avatarUrl(user.username)}
+            size={64}
+          />
           <div className="min-w-0">
             <Link
               href="/"

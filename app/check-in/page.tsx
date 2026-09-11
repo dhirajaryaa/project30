@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useApp, type SaveLogInput } from "@/components/app-provider";
+import { useApp } from "@/components/app-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,7 @@ import type {
   LogStatus,
   MissedReason,
   Project,
+  SaveLogInput,
 } from "@/lib/types";
 import { cn } from "cn";
 
@@ -61,7 +62,7 @@ export default function CheckInPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    if (status === "unauthenticated") router.replace("/onboarding");
+    if (status === "unauthenticated") router.replace("/sign-in");
   }, [status, router]);
 
   if (status !== "ready" || !project || !user) return null;
@@ -111,7 +112,7 @@ function CheckInForm({
   currentDay: number;
   project: Project;
   onCreate: () => void;
-  saveLog: (input: SaveLogInput) => Promise<DailyLog>;
+  saveLog: (input: SaveLogInput) => Promise<{ ok: true } | { ok: false; error: string }>;
 }) {
   const [task, setTask] = React.useState(todayLog?.task ?? "");
   const [status, setStatus] = React.useState<LogStatus>(todayLog?.status ?? "completed");
@@ -151,25 +152,25 @@ function CheckInForm({
       return;
     }
 
-    try {
-      await saveLog({
-        day_number: currentDay,
-        date: today,
-        task: task.trim(),
-        status,
-        activity_type: activityType,
-        what_i_did: whatIDid.trim(),
-        what_i_learned: whatILearned.trim(),
-        what_was_difficult: whatWasDifficult.trim() || undefined,
-        tomorrow_plan: tomorrowPlan.trim(),
-        missed_reason: status === "missed" ? missedReason : undefined,
-        evidence_url: evidenceUrl.trim() || undefined,
-      });
-      onCreate();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save.");
+    const result = await saveLog({
+      day_number: currentDay,
+      date: today,
+      task: task.trim(),
+      status,
+      activity_type: activityType,
+      what_i_did: whatIDid.trim(),
+      what_i_learned: whatILearned.trim(),
+      what_was_difficult: whatWasDifficult.trim() || undefined,
+      tomorrow_plan: tomorrowPlan.trim(),
+      missed_reason: status === "missed" ? missedReason : undefined,
+      evidence_url: evidenceUrl.trim() || undefined,
+    });
+    if (!result.ok) {
+      setError(result.error);
       setSaving(false);
+      return;
     }
+    onCreate();
   };
 
   return (

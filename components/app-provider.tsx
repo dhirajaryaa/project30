@@ -2,87 +2,65 @@
 
 import * as React from "react";
 import {
-  api,
-  ApiError,
-  clearToken,
-  setToken,
-} from "@/lib/api";
+  deleteLog as deleteLogAction,
+  getSessionData,
+  onboardProject,
+  resetAll as resetAllAction,
+  saveLog as saveLogAction,
+  setAvatar as setAvatarAction,
+} from "@/lib/actions";
 import { currentDayNumber } from "@/lib/dates";
-import { getLogByDay, sortLogs } from "@/lib/storage";
+import { getLogByDay } from "@/lib/storage";
 import type {
   AppData,
-  ActivityType,
   DailyLog,
-  LogStatus,
-  MissedReason,
+  OnboardInput,
+  SaveLogInput,
 } from "@/lib/types";
 
-type Status = "loading" | "ready" | "unauthenticated";
+type AuthStatus = "loading" | "ready" | "unauthenticated";
 
-export type SaveLogInput = {
-  day_number: number;
-  date: string;
-  task: string;
-  status: LogStatus;
-  activity_type: ActivityType;
-  what_i_did: string;
-  what_i_learned: string;
-  what_was_difficult?: string;
-  tomorrow_plan: string;
-  missed_reason?: MissedReason;
-  evidence_url?: string;
-};
-
-type OnboardInput = {
-  username: string;
-  display_name: string;
-  area: string;
-  goal: string;
-  start_date: string;
-};
+type ActionResult = { ok: true } | { ok: false; error: string };
 
 type AppContextValue = {
-  status: Status;
+  status: AuthStatus;
   data: AppData;
   user: AppData["user"];
   project: AppData["project"];
   logs: AppData["logs"];
   currentDay: number;
   todayLog: DailyLog | undefined;
-  createOnboard: (
-    input: OnboardInput
-  ) => Promise<{ ok: true } | { ok: false; error: string }>;
-  saveLog: (input: SaveLogInput) => Promise<DailyLog>;
-  deleteLog: (dayNumber: number) => Promise<void>;
   getLog: (dayNumber: number) => DailyLog | undefined;
+  createOnboard: (input: OnboardInput) => Promise<ActionResult>;
+  saveLog: (input: SaveLogInput) => Promise<ActionResult>;
+  deleteLog: (dayNumber: number) => Promise<ActionResult>;
+  setAvatar: (avatarUrl: string) => Promise<ActionResult>;
   resetAll: () => Promise<void>;
+  signOut: () => void;
 };
 
 const AppContext = React.createContext<AppContextValue | null>(null);
 
 const EMPTY: AppData = { user: null, project: null, logs: [] };
 
-function updateLogs(logs: AppData["logs"], log: DailyLog): AppData["logs"] {
-  const next = logs.filter((l) => l.day_number !== log.day_number);
-  return sortLogs([...next, log]);
-}
-
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [status, setStatus] = React.useState<Status>("loading");
+  const [status, setStatus] = React.useState<AuthStatus>("loading");
   const [data, setData] = React.useState<AppData>(EMPTY);
 
   React.useEffect(() => {
     let cancelled = false;
-    api<AppData>("/api/me")
-      .then((me) => {
+    getSessionData()
+      .then((sessionData) => {
         if (cancelled) return;
-        setData(me);
+        if (sessionData === null) {
+          setStatus("unauthenticated");
+          return;
+        }
+        setData(sessionData);
         setStatus("ready");
       })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) clearToken();
-        setStatus("unauthenticated");
+      .catch(() => {
+        if (!cancelled) setStatus("unauthenticated");
       });
     return () => {
       cancelled = true;
@@ -95,55 +73,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const currentDay = project ? currentDayNumber(project.start_date) : 0;
   const todayLog = project ? getLogByDay(logs, currentDay) : undefined;
 
-  const createOnboard = async (
-    input: OnboardInput
-  ): Promise<{ ok: true } | { ok: false; error: string }> => {
-    try {
-      const result = await api<{ token: string; data: AppData }>(
-        "/api/onboarding",
-        { method: "POST", body: JSON.stringify(input) }
-      );
-      setToken(result.token);
-      setData(result.data);
-      setStatus("ready");
-      return { ok: true };
-    } catch (err) {
-      if (err instanceof ApiError) {
-        return { ok: false, error: err.message };
-      }
-      return { ok: false, error: "Something went wrong. Try again." };
-    }
-  };
-
-  const saveLog = async (input: SaveLogInput): Promise<DailyLog> => {
-    const log = await api<DailyLog>(`/api/logs/${input.day_number}`, {
-      method: "PUT",
-      body: JSON.stringify(input),
-    });
-    setData((prev) => ({ ...prev, logs: updateLogs(prev.logs, log) }));
-    return log;
-  };
-
-  const deleteLog = async (dayNumber: number): Promise<void> => {
-    await api(`/api/logs/${dayNumber}`, { method: "DELETE" });
-    setData((prev) => ({
-      ...prev,
-      logs: prev.logs.filter((l) => l.day_number !== dayNumber),
-    }));
-  };
-
   const getLog = React.useCallback(
     (dayNumber: number) => getLogByDay(logs, dayNumber),
     [logs]
   );
 
+  const createOnboard = async (input: OnboardInput): Promise<ActionResult> => {
+    const result = await onboardProject(input);
+    if (!result.ok) return result;
+    setData(result.data);
+    setStatus("ready");
+    return { ok: true };
+  };
+
+  const saveLog = async (input: SaveLogInput): Promise<ActionResult> => {
+    const result = await saveLogAction(input);
+    if (!result.ok) return result;
+    setData(result.data);
+    return { ok: true };
+  };
+
+  const deleteLog = async (dayNumber: number): Promise<ActionResult> => {
+    const result = await deleteLogAction(dayNumber);
+    if (!result.ok) return result;
+    setData(result.data);
+    return { ok: true };
+  };
+
+  const setAvatar = async (avatarUrl: string): Promise<ActionResult> => {
+    const result = await setAvatarAction(avatarUrl);
+    if (!result.ok) return result;
+    setData(result.data);
+    return { ok: true };
+  };
+
   const resetAll = async (): Promise<void> => {
-    try {
-      await api("/api/me", { method: "DELETE" });
-    } catch {
-      /* already gone */
-    }
-    clearToken();
+    const next = await resetAllAction();
+    setData(next ?? EMPTY);
+  };
+
+  const signOut = (): void => {
     setData(EMPTY);
     setStatus("unauthenticated");
   };
@@ -156,11 +125,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     logs,
     currentDay,
     todayLog,
+    getLog,
     createOnboard,
     saveLog,
     deleteLog,
-    getLog,
+    setAvatar,
     resetAll,
+    signOut,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

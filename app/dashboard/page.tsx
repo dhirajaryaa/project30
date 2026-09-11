@@ -15,8 +15,33 @@ export default function DashboardPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    if (status === "unauthenticated") router.replace("/onboarding");
+    if (status === "unauthenticated") router.replace("/sign-in");
   }, [status, router]);
+
+  if (status === "loading") return null;
+
+  if (status === "ready" && !project) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center gap-5 text-center">
+        <p className="text-sm font-semibold tracking-widest text-primary">
+          PROJECT 30
+        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Start your Project 30
+        </h1>
+        <p className="text-muted-foreground">
+          Pick one area, set one 30-day goal, and start logging your daily
+          check-ins.
+        </p>
+        <Link
+          href="/onboarding"
+          className={cn(buttonVariants({ size: "lg" }), "px-6")}
+        >
+          Set up your Project 30
+        </Link>
+      </div>
+    );
+  }
 
   if (status !== "ready" || !project || !user) return null;
 

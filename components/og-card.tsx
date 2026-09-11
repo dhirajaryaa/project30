@@ -15,7 +15,7 @@ const COLORS = {
   bg: "#faf7f2",
   text: "#1c1a18",
   muted: "#8a8378",
-  accent: "#b04a24",
+  accent: "#e08a5c",
   light: "#e8e2d8",
 };
 
@@ -113,7 +113,7 @@ export function OgCard({
         </div>
         <div style={rule} />
         <div style={{ fontSize: 40, fontWeight: 600, letterSpacing: 4, color: COLORS.text }}>
-          DAY {day ?? 0} / 30
+          {`DAY ${day ?? 0} / 30`}
         </div>
         <div style={column}>
           <div
@@ -142,7 +142,7 @@ export function OgCard({
             </div>
           ) : null}
           <div style={{ marginTop: 48, fontSize: 36, color: COLORS.muted }}>
-            {area ?? ""} {subline ? `· ${subline}` : ""}
+            {[area, subline].filter(Boolean).join(" · ")}
           </div>
         </div>
       </div>

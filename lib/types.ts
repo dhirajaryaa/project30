@@ -62,3 +62,25 @@ export type AppData = {
   project: Project | null;
   logs: DailyLog[];
 };
+
+export type OnboardInput = {
+  username: string;
+  display_name: string;
+  area: string;
+  goal: string;
+  start_date: string;
+};
+
+export type SaveLogInput = {
+  day_number: number;
+  date: string;
+  task: string;
+  status: LogStatus;
+  activity_type: ActivityType;
+  what_i_did: string;
+  what_i_learned: string;
+  what_was_difficult?: string;
+  tomorrow_plan: string;
+  missed_reason?: MissedReason;
+  evidence_url?: string;
+};

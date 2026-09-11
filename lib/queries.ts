@@ -1,15 +1,31 @@
 import { connectDb } from "./db";
-import { DailyLog, Project, User, toLogDto, toProjectDto, toUserDto } from "./models";
+import {
+  DailyLog,
+  Project,
+  User,
+  toLogDto,
+  toProjectDto,
+  toPublicLogDto,
+  toUserDto,
+} from "./models";
 import { countByStatus, getLogByDay } from "./storage";
 import type { AppData } from "./types";
 
-export async function getMeData(token: string | null): Promise<AppData | null> {
-  if (!token) return null;
+export async function getProfileUserByAuthId(authId: string) {
   const conn = await connectDb();
   if (!conn) return null;
-  const user = await User.findOne({ auth_token: token });
-  if (!user) return null;
-  const project = await Project.findOne({ user_id: user._id }).sort({ createdAt: -1 });
+  return User.findOne({ auth_id: authId });
+}
+
+export async function getProfileData(authId: string): Promise<AppData | null> {
+  if (!authId) return null;
+  const conn = await connectDb();
+  if (!conn) return null;
+  const user = await User.findOne({ auth_id: authId });
+  if (!user) return { user: null, project: null, logs: [] };
+  const project = await Project.findOne({ user_id: user._id }).sort({
+    createdAt: -1,
+  });
   const logs = project
     ? await DailyLog.find({ project_id: project._id }).sort({ day_number: 1 })
     : [];
@@ -25,10 +41,14 @@ export async function getPublicProfile(username: string) {
   if (!conn) return null;
   const user = await User.findOne({ username: username.toLowerCase() });
   if (!user) return null;
-  const project = await Project.findOne({ user_id: user._id }).sort({ createdAt: -1 });
+  const project = await Project.findOne({ user_id: user._id }).sort({
+    createdAt: -1,
+  });
   if (!project) return null;
-  const logs = await DailyLog.find({ project_id: project._id }).sort({ day_number: 1 });
-  const dtoLogs = logs.map((l) => toLogDto(l.toObject()));
+  const logs = await DailyLog.find({ project_id: project._id }).sort({
+    day_number: 1,
+  });
+  const dtoLogs = logs.map((l) => toPublicLogDto(l.toObject()));
   const currentDay = currentDayFromStart(project.start_date);
   const counts = countByStatus(dtoLogs);
   const progress = Math.min(Math.round((counts.completed / 30) * 100), 100);
@@ -48,14 +68,16 @@ export async function getPublicDay(username: string, day: number) {
   if (!conn) return null;
   const user = await User.findOne({ username: username.toLowerCase() });
   if (!user) return null;
-  const project = await Project.findOne({ user_id: user._id }).sort({ createdAt: -1 });
+  const project = await Project.findOne({ user_id: user._id }).sort({
+    createdAt: -1,
+  });
   if (!project) return null;
   const log = await DailyLog.findOne({ project_id: project._id, day_number: day });
   if (!log) return null;
   return {
     user: toUserDto(user.toObject()),
     project: toProjectDto(project.toObject()),
-    log: toLogDto(log.toObject()),
+    log: toPublicLogDto(log.toObject()),
   };
 }
 
