@@ -30,7 +30,7 @@ export default function DayPage({
   }, [status, router]);
 
   if (status === "loading") return <Loader />;
-  if (status !== "ready" || !project || !user) return null;
+  if (status !== "ready" || !project || !user) return <Loader />;
 
   const log = getLog(day);
 

@@ -19,7 +19,7 @@ export default function JourneyPage() {
   }, [status, router]);
 
   if (status === "loading") return <Loader />;
-  if (status !== "ready" || !project || !user) return null;
+  if (status !== "ready" || !project || !user) return <Loader />;
 
   const counts = countByStatus(logs);
   const filled = sortLogs(logs);

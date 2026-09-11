@@ -1,12 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useApp } from "@/components/app-provider";
 
 export function SignOutButton() {
-  const router = useRouter();
   const { signOut } = useApp();
 
   return (
@@ -14,9 +12,16 @@ export function SignOutButton() {
       variant="ghost"
       size="sm"
       onClick={async () => {
-        await signOut();
-        await authClient.signOut();
-        router.push("/");
+        try {
+          await authClient.signOut();
+        } catch {
+          /* session cookie may already be expired */
+        }
+        signOut();
+        // Full reload guarantees a fresh server session state (no race with
+        // protected-route redirects) after the cookie above is cleared.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.href = "/";
       }}
     >
       Sign out

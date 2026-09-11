@@ -8,7 +8,7 @@ type OgCardProps = {
   username?: string;
   goal?: string;
   subline?: string;
-  variant?: "landing" | "profile" | "day";
+  variant?: "landing" | "profile" | "day" | "dashboard" | "journey" | "checkin";
 };
 
 const COLORS = {
@@ -67,30 +67,23 @@ export function OgCard({
           </span>
         </div>
         <div style={column}>
-          <div
-            style={{
-              fontSize: 48,
-              fontWeight: 600,
-              color: COLORS.accent,
-              letterSpacing: 2,
-            }}
-          >
-            {area?.toUpperCase() ?? ""}
+          <div style={{ fontSize: 28, fontWeight: 500, color: COLORS.muted, letterSpacing: 3, textTransform: "uppercase" }}>
+            {area ?? ""}
           </div>
           <div
             style={{
               marginTop: 16,
-              fontSize: 64,
+              fontSize: 72,
               fontWeight: 700,
               lineHeight: 1.15,
               letterSpacing: -2,
               maxWidth: 900,
             }}
           >
-            {goal ?? ""}
+            {`🚩 ${goal ?? ""}`}
           </div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 16, marginTop: 48 }}>
-            <span style={{ fontSize: 96, fontWeight: 700, lineHeight: 1 }}>
+            <span style={{ fontSize: 96, fontWeight: 700, lineHeight: 1, color: COLORS.accent }}>
               {day ?? 0}
             </span>
             <span style={{ fontSize: 40, color: COLORS.muted, marginBottom: 8 }}>
@@ -143,6 +136,75 @@ export function OgCard({
           ) : null}
           <div style={{ marginTop: 48, fontSize: 36, color: COLORS.muted }}>
             {[area, subline].filter(Boolean).join(" · ")}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === "dashboard") {
+    return (
+      <div style={root}>
+        <div style={header}>
+          <span style={{ letterSpacing: 8, fontWeight: 600 }}>PROJECT 30</span>
+          <span style={{ color: COLORS.muted }}>dashboard</span>
+        </div>
+        <div style={rule} />
+        <div style={column}>
+          <div style={{ fontSize: 28, fontWeight: 500, color: COLORS.muted, letterSpacing: 3, textTransform: "uppercase" }}>
+            {area ?? ""}
+          </div>
+          <div style={{ marginTop: 16, fontSize: 72, fontWeight: 700, lineHeight: 1.15, letterSpacing: -2, maxWidth: 900 }}>
+            {`🚩 ${goal ?? ""}`}
+          </div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 16, marginTop: 48 }}>
+            <span style={{ fontSize: 96, fontWeight: 700, lineHeight: 1, color: COLORS.accent }}>
+              {day ?? 0}
+            </span>
+            <span style={{ fontSize: 40, color: COLORS.muted, marginBottom: 8 }}>/ 30</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === "journey") {
+    return (
+      <div style={root}>
+        <div style={header}>
+          <span style={{ letterSpacing: 8, fontWeight: 600 }}>PROJECT 30</span>
+          <span style={{ color: COLORS.muted }}>journey</span>
+        </div>
+        <div style={rule} />
+        <div style={{ fontSize: 40, fontWeight: 600, letterSpacing: 4, color: COLORS.text }}>
+          THE 30-DAY JOURNEY
+        </div>
+        <div style={column}>
+          <div style={{ fontSize: 28, fontWeight: 500, color: COLORS.muted, letterSpacing: 3, textTransform: "uppercase" }}>
+            {area ?? ""}
+          </div>
+          <div style={{ marginTop: 16, fontSize: 56, fontWeight: 700, lineHeight: 1.15, letterSpacing: -2, maxWidth: 900 }}>
+            {`🚩 ${goal ?? ""}`}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === "checkin") {
+    return (
+      <div style={root}>
+        <div style={header}>
+          <span style={{ letterSpacing: 8, fontWeight: 600 }}>PROJECT 30</span>
+          <span style={{ color: COLORS.muted }}>daily check-in</span>
+        </div>
+        <div style={rule} />
+        <div style={column}>
+          <div style={{ fontSize: 72, fontWeight: 700, lineHeight: 1.15, letterSpacing: -2, maxWidth: 900 }}>
+            {"Log today's progress"}
+          </div>
+          <div style={{ marginTop: 24, fontSize: 36, color: COLORS.accent, fontWeight: 600 }}>
+            30 minutes. 30 days. One area.
           </div>
         </div>
       </div>

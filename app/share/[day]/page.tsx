@@ -30,7 +30,7 @@ export default function SharePage({
   }, [status, router]);
 
   if (status === "loading") return <Loader />;
-  if (status !== "ready" || !project || !user) return null;
+  if (status !== "ready" || !project || !user) return <Loader />;
 
   const log = getLog(day);
   const shareUrl = absoluteUrl(`/u/${user.username}/day/${day}`);

@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import { LandingCta } from "@/components/landing-cta";
 import { buttonVariants } from "@/components/ui/button";
+import { pageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Project 30 — 30 minutes. 30 days. One area.",
+  description:
+    "A 30-day accountability system. Choose one area, work on it for 30 minutes every day for 30 days, and record what you did, what you learned, and what you will do next.",
+  url: "/",
+  image: "/opengraph-image",
+});
 
 const STEPS = [
   {

@@ -7,12 +7,13 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isProtected =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/check-in") ||
-    pathname.startsWith("/journey") ||
-    pathname.startsWith("/day/") ||
-    pathname.startsWith("/share/") ||
-    pathname === "/onboarding";
+    !pathname.endsWith("opengraph-image") &&
+    (pathname.startsWith("/dashboard") ||
+      pathname.startsWith("/check-in") ||
+      pathname.startsWith("/journey") ||
+      pathname.startsWith("/day/") ||
+      pathname.startsWith("/share/") ||
+      pathname === "/onboarding");
 
   if (isProtected && !session) {
     const url = request.nextUrl.clone();

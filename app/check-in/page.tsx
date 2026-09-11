@@ -67,7 +67,7 @@ export default function CheckInPage() {
   }, [status, router]);
 
   if (status === "loading") return <Loader />;
-  if (status !== "ready" || !project || !user) return null;
+  if (status !== "ready" || !project || !user) return <Loader />;
 
   const expectedDay = currentDayNumber(project.start_date);
 

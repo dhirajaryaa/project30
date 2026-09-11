@@ -44,7 +44,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (status !== "ready" || !project || !user) return null;
+  if (status !== "ready" || !project || !user) return <Loader />;
 
   const counts = countByStatus(logs);
   const progress = Math.min(
