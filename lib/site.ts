@@ -1,4 +1,5 @@
 export const SITE_URL = (
+  process.env.SITE_PUBLIC_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.AUTH_URL ||
   "http://localhost:3000"

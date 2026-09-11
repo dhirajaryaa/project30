@@ -9,11 +9,9 @@ import {
 } from "./models";
 import { countByStatus, getLogByDay } from "./storage";
 import type { AppData } from "./types";
+import { ObjectId } from "mongodb";
 
-// better-auth's mongodbAdapter stores _id as a string (24-hex).
-// The native driver's TS types assume ObjectId; these casts are safe.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const authFilter = (id: string): any => ({ _id: id });
+const authFilter = (id: string) => ({ _id: new ObjectId(id) });
 
 async function getAuthUserById(authId: string) {
   try {

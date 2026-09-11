@@ -6,6 +6,7 @@ import { avatarUrl } from "@/lib/avatar";
 import { isValidUsername } from "@/lib/dates";
 import { connectDb, getAuthDb } from "@/lib/db";
 import { DailyLog, Project } from "@/lib/models";
+import { ObjectId } from "mongodb";
 import { getProfileData } from "@/lib/queries";
 import type {
   AppData,
@@ -42,11 +43,9 @@ const MISSED_REASONS: MissedReason[] = [
 const MAX_FIELD = 5000;
 const MAX_TASK = 300;
 
-// better-auth's mongodbAdapter stores _id as a string; native driver TS types default to ObjectId.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const authFilter = (id: string): any => ({ _id: id });
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const projectFilter = (userId: string): any => ({ user_id: userId });
+// better-auth's mongodbAdapter stores _id as ObjectId; native driver requires explicit casting.
+const authFilter = (id: string) => ({ _id: new ObjectId(id) });
+const projectFilter = (userId: string) => ({ user_id: userId });
 
 async function requireAuthId(): Promise<string | null> {
   const session = await auth.api.getSession({
@@ -235,7 +234,8 @@ export async function setAvatar(avatar_url: string): Promise<Result> {
   const db = await getAuthDb();
   const result = await db
     .collection("user")
-    .updateOne({ _id: authId }, { $set: { avatar_url: url } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .updateOne({ _id: authId } as any, { $set: { avatar_url: url } });
   if (!result.matchedCount) return { ok: false, error: "No account." };
 
   const data = await getProfileData(authId);

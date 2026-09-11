@@ -58,8 +58,8 @@ Environment variables:
 
 - `MONGODB_URI` — MongoDB connection string.
 - `AUTH_SECRET` — secret for better-auth (run `openssl rand -base64 32`).
-- `AUTH_URL` / `NEXT_PUBLIC_SITE_URL` — the app base URL.
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth app credentials (sign-in via https://console.cloud.google.com → APIs & Services → Credentials → OAuth 2.0 Client IDs → Web application; add `{AUTH_URL}/api/auth/callback/google` and `{AUTH_URL}/api/auth/error` to redirect URIs).
+- `SITE_PUBLIC_URL` — the app base URL (canonical URLs, OG metadata, auth base). Set to the production domain on Vercel.
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth app credentials (sign-in via https://console.cloud.google.com → APIs & Services → Credentials → OAuth 2.0 Client IDs → Web application; add `{SITE_PUBLIC_URL}/api/auth/callback/google` and `{SITE_PUBLIC_URL}/api/auth/error` to redirect URIs).
 
 Open [http://localhost:3000](http://localhost:3000).
 
@@ -100,8 +100,8 @@ proxy.ts        # Route protection (Next.js proxy/middleware)
 
 ## Data model
 
-- **User** — id, username, display_name, avatar_url, auth_id (better-auth), created_at
-- **Project** — id, user_id, area, goal, start_date, status, created_at
+- **User** — single table = the better-auth `user` collection: _id (the user id), email, name (display name), username, avatar_url, createdAt, updatedAt
+- **Project** — id, user_id (string = better-auth user id), area, goal, start_date, status, created_at
 - **DailyLog** — id, project_id, day_number (1–30), date, task, status, activity_type, what_i_did, what_i_learned, what_was_difficult, tomorrow_plan, missed_reason, evidence_url, created_at, updated_at — unique per `(project_id, day_number)`
 
 ---
@@ -109,14 +109,6 @@ proxy.ts        # Route protection (Next.js proxy/middleware)
 ## Definition of Done
 
 The MVP is complete when one real person can open the app, create their Project 30, log each day for 30 days, view their full timeline, share a beautiful public progress page, and generate/share a daily progress card. When all of that works, **stop building** — no extra features.
-
----
-
-## Roadmap (do NOT build yet)
-
-- **V2**: GitHub activity evidence, AI reflection summaries
-- **V3**: public community, small accountability groups, cohorts
-- **V4**: richer social discovery
 
 ---
 

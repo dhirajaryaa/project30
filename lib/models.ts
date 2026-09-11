@@ -1,11 +1,38 @@
-import { Schema, models, model } from "mongoose";
+import { Schema, models, model, type Model, type Types } from "mongoose";
 import type {
   DailyLog as DailyLogDTO,
   Project as ProjectDTO,
   User as UserDTO,
 } from "./types";
 
-const projectSchema = new Schema(
+export interface ProjectDoc {
+  user_id: string;
+  area: string;
+  goal: string;
+  start_date: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DailyLogDoc {
+  project_id: Types.ObjectId;
+  day_number: number;
+  date: string;
+  task: string;
+  status: string;
+  activity_type: string;
+  what_i_did: string;
+  what_i_learned: string;
+  what_was_difficult?: string;
+  tomorrow_plan: string;
+  missed_reason?: string;
+  evidence_url?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const projectSchema = new Schema<ProjectDoc>(
   {
     user_id: {
       type: String,
@@ -24,7 +51,7 @@ const projectSchema = new Schema(
   { timestamps: true }
 );
 
-const dailyLogSchema = new Schema(
+const dailyLogSchema = new Schema<DailyLogDoc>(
   {
     project_id: {
       type: Schema.Types.ObjectId,
@@ -52,12 +79,12 @@ const dailyLogSchema = new Schema(
 
 dailyLogSchema.index({ project_id: 1, day_number: 1 }, { unique: true });
 
-export const Project =
-  (models.Project as ReturnType<typeof model>) ?? model("Project", projectSchema);
-export const DailyLog =
-  (models.DailyLog as ReturnType<typeof model>) ?? model("DailyLog", dailyLogSchema);
-
-type Doc = Record<string, unknown> & { _id: unknown };
+export const Project = (
+  models.Project ?? model<ProjectDoc>("Project", projectSchema)
+) as Model<ProjectDoc>;
+export const DailyLog = (
+  models.DailyLog ?? model<DailyLogDoc>("DailyLog", dailyLogSchema)
+) as Model<DailyLogDoc>;
 
 // User rows come from the better-auth `user` collection (one table per user).
 // id = the better-auth user id, display name = better-auth `name` (from Google).
